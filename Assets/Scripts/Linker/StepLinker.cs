@@ -9,14 +9,25 @@ namespace GameSystem
         [AddComponentMenu("Linker/StepLinker")]
         public class StepLinker : MonoBehaviour
         {
-            public float stepThreadhold;
+            [MinsHeader("Step Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
+            public float stepThreadhold = 1;
 
             private float stepper = 0;
 
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public SimpleEvent output;
 
             //Input
+            [ContextMenu("Invoke")]
+            public void Invoke()
+            {
+                output?.Invoke();
+            }
             public void StepForward(float input)
             {
                 stepper += input;

@@ -9,7 +9,17 @@ namespace GameSystem
         [AddComponentMenu("Operator/AudioSystem/SoundPlayer")]
         public class SoundPlayer : Linker.AudioConfigLinker
         {
+#if UNITY_EDITOR
+            [MinsHeader("Operator of AudioSystem", SummaryType.PreTitleOperator, -1)]
+            [MinsHeader("Sound Player", SummaryType.TitleOrange, 0)]
+            [MinsHeader("此操作节点用来播放音效", SummaryType.CommentCenter, 1)]
+            [ConditionalShow, System.NonSerialized] private bool useless;
+#endif
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public AudioSystem.Sound sound;
+
             //Input
             [ContextMenu("Invoke")]
             public override void Invoke()

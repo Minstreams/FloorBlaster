@@ -38,6 +38,8 @@ namespace GameSystem
         }
 
         //输入行为委托--------------------------
+        public static event System.Action<UnityEngine.Vector2> point;
+        public static event System.Action<float> slide;
         public static event System.Action<UnityEngine.Vector2> drag;
 
 

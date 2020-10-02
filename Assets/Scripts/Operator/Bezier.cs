@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 namespace GameSystem
 {
@@ -9,9 +10,15 @@ namespace GameSystem
         [AddComponentMenu("Operator/Bezier")]
         public class Bezier : MonoBehaviour
         {
-            public Transform[] controlPoints;
-            public LineRenderer lineRenderer;
+            [MinsHeader("Bezier", SummaryType.TitleYellow, 0)]
+            [MinsHeader("To draw a bezier curve through a existing Line Renderer", SummaryType.CommentCenter, 1)]
 
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            public Transform[] controlPoints;
+            [Label]
+            public LineRenderer lineRenderer;
+            [Label]
             public int segmentCount = 50;
 
             private void Start()

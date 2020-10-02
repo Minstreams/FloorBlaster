@@ -15,10 +15,17 @@ public class LabelRangeAttribute : PropertyAttribute
     /// 常量在游戏中不允许改变
     /// </summary>
     public bool Const = false;
+    public bool Disable = false;
 
     public float Left;
     public float Right;
 
+    public LabelRangeAttribute(float left, float right)
+    {
+        this.Disable = true;
+        this.Left = left;
+        this.Right = Math.Max(left, right);
+    }
     public LabelRangeAttribute(string label, float left, float right)
     {
         this.Label = label;

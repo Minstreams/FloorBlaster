@@ -94,7 +94,7 @@ namespace GameSystem
 
 
 #if UNITY_EDITOR
-        [MinsHeader("By Minstreams. The Matrix组件的核心，只能有一个。", SummaryType.Comment)]
+        [MinsHeader("By Minstreams. The Matrix组件的核心，只能有一个。", SummaryType.CommentCenter)]
         [MinsHeader("The Matrix 母体系统", SummaryType.Title)]
         [Label("是否进行完整测试", true)]
         public bool testAll = false;

@@ -9,10 +9,17 @@ namespace GameSystem
         [AddComponentMenu("Linker/ThreadholdFloatLinker")]
         public class ThreadholdFloatLinker : MonoBehaviour
         {
-            private float value = 0;
+            [MinsHeader("Threadhold Float Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public float threadhold = 0.5f;
 
+            private float value = 0;
+
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public SimpleEvent onOverThreadhold;
             public SimpleEvent onBelowThreadhold;
 

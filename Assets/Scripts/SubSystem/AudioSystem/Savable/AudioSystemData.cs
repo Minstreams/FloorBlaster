@@ -10,10 +10,13 @@ namespace GameSystem
         [CreateAssetMenu(fileName = "AudioSystemData", menuName = "Savable/AudioSystemData")]
         public class AudioSystemData : SavableObject
         {
-            [MinsHeader("音频系统可控配置", SummaryType.Title)]
-            [LabelRange("Music Volume", 0, 1)]
+            [MinsHeader("SavableObject of AudioSystem", SummaryType.PreTitleSavable, -1)]
+            [MinsHeader("音频系统可控配置", SummaryType.TitleGreen, 0)]
+            [MinsHeader("用来存储用户的音频设置", SummaryType.CommentCenter, 1)]
+
+            [LabelRange(0, 1)]
             public float musicVolume;
-            [LabelRange("Sound Volume", 0, 1)]
+            [LabelRange(0, 1)]
             public float soundVolume;
 
             public override void ApplyData()

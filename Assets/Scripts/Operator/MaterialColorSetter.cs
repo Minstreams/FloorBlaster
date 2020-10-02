@@ -9,18 +9,29 @@ namespace GameSystem
         [AddComponentMenu("Operator/MaterialColorSetter")]
         public class MaterialColorSetter : MonoBehaviour
         {
-            public Color target;
+#if UNITY_EDITOR
+            [MinsHeader("Material Color Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
+            public Color target = Color.white;
+            [Label]
             public string paramName = "_EmissionFactor";
             [System.Serializable]
-            public struct MaterialFloatPair
+            public struct MaterialColorPair
             {
                 public Renderer renderer;
                 public int index;
                 [HideInInspector]
                 public Color value;
             }
-            public MaterialFloatPair[] materialFloatPairs;
+            [Label("Mat-Color Pair")]
+            public MaterialColorPair[] materialColorPairs;
 
+            [Label(true)]
             public bool setOnStart = true;
             private void Start()
             {
@@ -35,7 +46,7 @@ namespace GameSystem
             }
             public void Set(Color target)
             {
-                foreach (MaterialFloatPair mfp in materialFloatPairs)
+                foreach (MaterialColorPair mfp in materialColorPairs)
                 {
                     mfp.renderer.materials[mfp.index].SetColor(paramName, target);
                 }

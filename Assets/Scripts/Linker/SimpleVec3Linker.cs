@@ -9,7 +9,13 @@ namespace GameSystem
         [AddComponentMenu("Linker/SimpleVec3Linker")]
         public class SimpleVec3Linker : MonoBehaviour
         {
+            [MinsHeader("Simple Vec3 Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public Vector3 data;
+            [Label(true)]
             public bool invokeOnStart;
 
             private void Start()
@@ -18,6 +24,7 @@ namespace GameSystem
             }
 
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public Vec3Event output;
 
             //Input

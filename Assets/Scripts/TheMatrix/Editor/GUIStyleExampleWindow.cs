@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -31,7 +32,7 @@ public sealed class GUIStyleExampleWindow : EditorWindow
     private int length = 0;
     private void OnEnable()
     {
-        GUISkin skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector);
+        GUISkin skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Scene);
         sList = skin.customStyles;
         length = dList.Length + sList.Length;
     }
@@ -50,6 +51,8 @@ public sealed class GUIStyleExampleWindow : EditorWindow
     private int page = 0;
     private int itemsPerPage = 30;
     private string text = "Test测试";
+    private bool expandWidth = false;
+    private bool isButton = false;
     private void OnGUI()
     {
         mScrollPos = EditorGUILayout.BeginScrollView(mScrollPos);
@@ -59,7 +62,8 @@ public sealed class GUIStyleExampleWindow : EditorWindow
             GUIStyle style = i < dList.Length ? dList[i] : sList[i - dList.Length];
             GUILayout.BeginHorizontal();
             EditorGUILayout.SelectableLabel(name, GUILayout.MaxWidth(250));
-            GUILayout.Label(text, style);
+            if (isButton) GUILayout.Button(text, style, GUILayout.ExpandWidth(expandWidth));
+            else GUILayout.Label(text, style, GUILayout.ExpandWidth(expandWidth));
             GUILayout.EndHorizontal();
             GUILayout.Box(
                 string.Empty,
@@ -67,23 +71,43 @@ public sealed class GUIStyleExampleWindow : EditorWindow
                 GUILayout.Height(1)
             );
         }
-
         EditorGUILayout.EndScrollView();
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("prev"))
+        GUILayout.BeginVertical("In Footer");
         {
-            page--;
-            if (page < 0) page = 0;
+            string stt = "FrameBox";
+            GUILayout.BeginHorizontal(stt, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
+            {
+                expandWidth = GUILayout.Toggle(expandWidth, "Expand Width", GUILayout.MaxWidth(236));
+                GUILayout.Label("|", "DefaultCenteredText", GUILayout.ExpandWidth(false));
+                itemsPerPage = Math.Max(1, EditorGUILayout.IntField(itemsPerPage, GUILayout.MaxWidth(26)));
+                GUILayout.Label("items per page");
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(stt);
+            {
+                isButton = GUILayout.Toggle(isButton, "Is Button", GUILayout.MaxWidth(236));
+                GUILayout.Label("|", "DefaultCenteredText", GUILayout.ExpandWidth(false));
+                text = EditorGUILayout.TextField(text);
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            {
+                if (GUILayout.Button("prev", "LargeButton", GUILayout.MaxWidth(164)))
+                {
+                    page--;
+                    if (page < 0) page = 0;
+                }
+                GUILayout.Label(page.ToString(), "DropzoneStyle");
+
+                if (GUILayout.Button("next", "LargeButton", GUILayout.MaxWidth(164)))
+                {
+                    page++;
+                    while (page * itemsPerPage > length) page--;
+                }
+            }
+            GUILayout.EndHorizontal();
         }
-        itemsPerPage = EditorGUILayout.IntField(itemsPerPage);
-        GUILayout.Label(page.ToString());
-        if (GUILayout.Button("next"))
-        {
-            page++;
-            while (page * itemsPerPage > length) page--;
-        }
-        GUILayout.EndHorizontal();
-        text = EditorGUILayout.TextField(text);
+        GUILayout.EndVertical();
     }
 }
 

@@ -9,11 +9,27 @@ namespace GameSystem
         [AddComponentMenu("Operator/Transformer")]
         public class Transformer : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Image Color Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public Vector3 targetPosition;
-            public AnimationCurve moveCurve;
-            public float time;
+            [Label]
+            public AnimationCurve moveCurve = AnimationCurve.Linear(0, 0, 1, 1);
+            [Label]
+            public float time = 1;
+            [Label(true)]
             public bool sendMovementEvent = false;
+
+            //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
+            [ConditionalShow("sendMovementEvent", true)]
             public FloatEvent movementOutput;
+
 
             [ContextMenu("MoveToInTime")]
             public void MoveToInTime()

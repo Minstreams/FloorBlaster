@@ -15,12 +15,14 @@ public class LabelAttribute : PropertyAttribute
     /// 常量在游戏中不允许改变
     /// </summary>
     public bool Const = false;
+    public bool Disable = false;
 
-    public LabelAttribute(string label)
+    public LabelAttribute(bool isConst = false)
     {
-        this.Label = label;
+        this.Disable = true;
+        this.Const = isConst;
     }
-    public LabelAttribute(string label, bool isConst)
+    public LabelAttribute(string label, bool isConst = false)
     {
         this.Label = label;
         this.Const = isConst;

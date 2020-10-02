@@ -9,7 +9,11 @@ namespace GameSystem
         [AddComponentMenu("Linker/AudioSystem/AudioConfigSplitter")]
         public class AudioConfigSplitter : MonoBehaviour
         {
+            [MinsHeader("Linker of AudioSystem", SummaryType.PreTitleLinker, -1)]
+            [MinsHeader("Audio Config Splitter", SummaryType.TitleBlue, 0)]
+
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public BoolEvent loopOutput;
             public FloatEvent pitchOutput;
             public FloatEvent volumeOutput;

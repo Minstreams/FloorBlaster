@@ -9,9 +9,19 @@ namespace GameSystem
         [AddComponentMenu("Operator/Rotater")]
         public class Rotater : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Image Color Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public Vector3 targetRotation;
-            public AnimationCurve moveCurve;
-            public float time;
+            [Label]
+            public AnimationCurve moveCurve = AnimationCurve.Linear(0, 0, 1, 1);
+            [Label]
+            public float time = 1;
 
             //Input
             [ContextMenu("RotateToLocally")]

@@ -22,9 +22,18 @@ namespace GameSystem
         [System.Serializable]
         public class AudioConfig
         {
+            [Label]
             public bool loop;
+            [LabelRange(-3, 3)]
             public float pitch;
+            [LabelRange(0, 1)]
             public float volume;
+            public AudioConfig()
+            {
+                this.loop = false;
+                this.pitch = 1;
+                this.volume = 1;
+            }
             public AudioConfig(bool loop, float pitch, float volume)
             {
                 this.loop = loop;

@@ -9,7 +9,16 @@ namespace GameSystem
         [AddComponentMenu("Operator/MaterialSetter")]
         public class MaterialSetter : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Material Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public int index;
+
             [System.Serializable]
             public struct MaterialPair
             {
@@ -20,10 +29,13 @@ namespace GameSystem
             [System.Serializable]
             public struct MaterialSettingPreset
             {
+                [Label("Mat Pair")]
                 public MaterialPair[] materialPairs;
             }
+            [Label("Present")]
             public MaterialSettingPreset[] presets;
 
+            [Label]
             public bool setOnEnable;
 
             private void OnEnable()

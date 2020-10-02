@@ -9,12 +9,21 @@ namespace GameSystem
         [AddComponentMenu("Linker/LerpVec3Linker")]
         public class LerpVec3Linker : MonoBehaviour
         {
-            public AnimationCurve remapXCurve;
-            public AnimationCurve remapYCurve;
-            public AnimationCurve remapZCurve;
+            [MinsHeader("Lerp Vec3 Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
+            public AnimationCurve remapXCurve = AnimationCurve.Linear(0, 0, 1, 1);
+            [Label]
+            public AnimationCurve remapYCurve = AnimationCurve.Linear(0, 0, 1, 1);
+            [Label]
+            public AnimationCurve remapZCurve = AnimationCurve.Linear(0, 0, 1, 1);
+            [Label]
             public bool clamp = false;
 
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public Vec3Event output;
 
             //Input

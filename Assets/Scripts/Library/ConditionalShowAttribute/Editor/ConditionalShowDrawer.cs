@@ -1,9 +1,24 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEngine.Events;
+using System;
 
 [CustomPropertyDrawer(typeof(ConditionalShowAttribute))]
 public class ConditionalShowDrawer : PropertyDrawer
 {
+    private UnityEditorInternal.UnityEventDrawer ueDrawer;
+    private UnityEditorInternal.UnityEventDrawer UEDrawer
+    {
+        get
+        {
+            if (ueDrawer == null)
+            {
+                ueDrawer = new UnityEditorInternal.UnityEventDrawer();
+            }
+            return ueDrawer;
+        }
+    }
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         if (IsConditionMet(property))
@@ -11,24 +26,35 @@ public class ConditionalShowDrawer : PropertyDrawer
             //条件满足，开始绘制
             bool wasEnabled = GUI.enabled;
             GUI.enabled = true;
-            EditorGUI.PropertyField(position, property, label);
+            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
+            else EditorGUI.PropertyField(position, property, label);
             GUI.enabled = wasEnabled;
         }
     }
     private bool IsConditionMet(SerializedProperty property)
     {
         ConditionalShowAttribute condSAtt = (ConditionalShowAttribute)attribute;
+        if (condSAtt.Disabled) return false;
         SerializedProperty sourcePropertyValue = property.serializedObject.FindProperty(condSAtt.ConditionalIntField);
         if (sourcePropertyValue == null)
         {
             Debug.LogWarning("ConditionalShowAttribute 指向了一个不存在的条件字段: " + condSAtt.ConditionalIntField);
             return false;
         }
-        return condSAtt.ExpectedValue == sourcePropertyValue.intValue;
+        int intVal = sourcePropertyValue.propertyType == SerializedPropertyType.Boolean ? (sourcePropertyValue.boolValue ? 1 : 0) : sourcePropertyValue.intValue;
+        for (int i = 0; i < condSAtt.ExpectedValues.Length; i++)
+        {
+            if (condSAtt.ExpectedValues[i] == intVal) return true;
+        }
+        return false;
     }
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        if (IsConditionMet(property)) return EditorGUI.GetPropertyHeight(property, label);
+        if (IsConditionMet(property))
+        {
+            if (property.type.EndsWith("Event")) return UEDrawer.GetPropertyHeight(property, label);
+            return EditorGUI.GetPropertyHeight(property, label);
+        }
         return -EditorGUIUtility.standardVerticalSpacing;
     }
 }

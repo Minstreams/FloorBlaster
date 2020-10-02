@@ -9,7 +9,13 @@ namespace GameSystem
         [AddComponentMenu("Linker/SimpleColorLinker")]
         public class SimpleColorLinker : MonoBehaviour
         {
-            public Color data;
+            [MinsHeader("Simple Color Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
+            public Color data = Color.white;
+            [Label(true)]
             public bool invokeOnStart;
 
             private void Start()
@@ -18,6 +24,7 @@ namespace GameSystem
             }
 
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public ColorEvent output;
 
             //Input

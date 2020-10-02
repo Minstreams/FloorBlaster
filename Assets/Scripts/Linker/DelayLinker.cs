@@ -9,11 +9,15 @@ namespace GameSystem
         [AddComponentMenu("Linker/DelayLinker")]
         public class DelayLinker : MonoBehaviour
         {
-            [MinsHeader("DelayLinker",SummaryType.Title)]
-            [Label("Delay")]
+            [MinsHeader("Delay Linker", SummaryType.TitleCyan, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public float delay = 0.5f;
 
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public SimpleEvent output;
 
             //Input

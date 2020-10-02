@@ -9,20 +9,30 @@ namespace GameSystem
         [AddComponentMenu("Operator/CanvasMaterialFloatSetter")]
         public class CanvasMaterialFloatSetter : MonoBehaviour
         {
-            public float target;
+            [MinsHeader("Canvas Material Float Setter", SummaryType.TitleYellow, 0)]
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
+            public float target = 0.3f;
+            [Label]
             public float time = 0.5f;
+            [Label]
             public string paramName = "_EmissionFactor";
 
+            [Label("Canvas Renderer")]
             public UnityEngine.UI.Image canvasRenderer;
 
+            [Label(true)]
             public bool setOnStart = true;
+            [Label(true)]
+            public bool setOnEnable = false;
+
+            //Inner code here
             private void Start()
             {
                 if (setOnStart) Set();
             }
-
-            public bool setOnEnable;
-
             private void OnEnable()
             {
                 if (setOnEnable) Set();

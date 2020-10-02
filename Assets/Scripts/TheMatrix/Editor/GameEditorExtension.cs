@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using GameSystem;
 using System.IO;
+using UnityEngine.WSA;
 
 public class GameEditorExtension : EditorWindow
 {
@@ -63,9 +64,13 @@ public class GameEditorExtension : EditorWindow
     /// <summary>
     /// 添加子系统
     /// </summary>
-    public static void AddSubSystem(string name, string comment)
+    public static void AddSubSystem(string name, string title, string comment)
     {
-        if (string.IsNullOrWhiteSpace(name)) return;
+        if (!wordReg.IsMatch(name))
+        {
+            EditorUtility.DisplayDialog("Minstreams工具箱", "Invalid Name", "~");
+            return;
+        }
         if (!name.EndsWith("System")) name += "System";
         if (AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + name))
         {
@@ -103,7 +108,7 @@ using GameSystem.Setting;
 namespace GameSystem
 {
     /// <summary>
-    /// " + (string.IsNullOrEmpty(comment) ? name : comment) + @"
+    /// " + title + " - " + comment + @"
     /// </summary>
     public class " + name + @" : SubSystem<" + name + @"Setting>
     {
@@ -173,15 +178,20 @@ namespace GameSystem
     /// <summary>
     /// 添加Linker
     /// </summary>
-    public static void AddLinker(string name, string comment, string subSystemName = "")
+    public static void AddLinker(string name, string title, string comment, string subSystemName = "")
     {
-        if (string.IsNullOrWhiteSpace(name)) return;
-        if (!string.IsNullOrWhiteSpace(subSystemName))
+        if (!wordReg.IsMatch(name))
+        {
+            EditorUtility.DisplayDialog("Minstreams工具箱", "Invalid Name", "~");
+            return;
+        }
+        bool isOfSubSys = !string.IsNullOrWhiteSpace(subSystemName);
+        if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Linker")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Linker");
         }
-        var f = File.CreateText("Assets/Scripts/" + (string.IsNullOrWhiteSpace(subSystemName) ? "" : ("SubSystem/" + subSystemName + "/")) + "Linker/" + name + ".cs");
+        var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Linker/" + name + ".cs");
         f.Write(
 @"using System.Collections;
 using System.Collections.Generic;
@@ -195,12 +205,23 @@ namespace GameSystem
         @"/// <summary>
         /// " + comment + @"
         /// </summary>")) + @"
-        [AddComponentMenu(" + "\"Linker/" + (string.IsNullOrWhiteSpace(subSystemName) ? "" : (subSystemName + "/")) + name + "\"" + @")]
+        [AddComponentMenu(" + "\"Linker/" + (isOfSubSys ? (subSystemName + "/") : "") + name + "\"" + @")]
         public class " + name + @" : MonoBehaviour
         {
+#if UNITY_EDITOR" + (isOfSubSys ? @"
+            [MinsHeader(" + "\"Linker of " + subSystemName + "\", SummaryType.PreTitleLinker, -1)]" : "") + @"
+            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Blue" : "Cyan") + @", 0)]
+            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+            [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
+#endif
+
+            //Data
+            [MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
+
             //Inner code here
 
             //Output
+            [MinsHeader(" + "\"Output\"" + @", SummaryType.Header, 3)]
             public SimpleEvent output;
 
             //Input
@@ -219,15 +240,20 @@ namespace GameSystem
     /// <summary>
     /// 添加Operator
     /// </summary>
-    public static void AddOperator(string name, string comment, string subSystemName = "")
+    public static void AddOperator(string name, string title, string comment, string subSystemName = "")
     {
-        if (string.IsNullOrWhiteSpace(name)) return;
-        if (!string.IsNullOrWhiteSpace(subSystemName))
+        if (!wordReg.IsMatch(name))
+        {
+            EditorUtility.DisplayDialog("Minstreams工具箱", "Invalid Name", "~");
+            return;
+        }
+        bool isOfSubSys = !string.IsNullOrWhiteSpace(subSystemName);
+        if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Operator")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Operator");
         }
-        var f = File.CreateText("Assets/Scripts/" + (string.IsNullOrWhiteSpace(subSystemName) ? "" : ("SubSystem/" + subSystemName + "/")) + "Operator/" + name + ".cs");
+        var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Operator/" + name + ".cs");
         f.Write(
 @"using System.Collections;
 using System.Collections.Generic;
@@ -241,12 +267,23 @@ namespace GameSystem
         @"/// <summary>
         /// " + comment + @"
         /// </summary>")) + @"
-        [AddComponentMenu(" + "\"Operator/" + (string.IsNullOrWhiteSpace(subSystemName) ? "" : (subSystemName + "/")) + name + "\"" + @")]
+        [AddComponentMenu(" + "\"Operator/" + (isOfSubSys ? (subSystemName + "/") : "") + name + "\"" + @")]
         public class " + name + @" : MonoBehaviour
         {
+#if UNITY_EDITOR" + (isOfSubSys ? @"
+            [MinsHeader(" + "\"Operator of " + subSystemName + "\", SummaryType.PreTitleOperator, -1)]" : "") + @"
+            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Orange" : "Yellow") + @", 0)]
+            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+            [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
+#endif
+
+            //Data
+            //[MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
+
             //Inner code here
 
             //Input
+            //[ContextMenu(" + "\"SomeFuntion\"" + @")]
             //public void SomeFuntion(){}
         }
     }
@@ -258,15 +295,20 @@ namespace GameSystem
     /// <summary>
     /// 添加Savable
     /// </summary>
-    public static void AddSavable(string name, string comment, string subSystemName = "")
+    public static void AddSavable(string name, string title, string comment, string subSystemName = "")
     {
-        if (string.IsNullOrWhiteSpace(name)) return;
-        if (!string.IsNullOrWhiteSpace(subSystemName))
+        if (!wordReg.IsMatch(name))
+        {
+            EditorUtility.DisplayDialog("Minstreams工具箱", "Invalid Name", "~");
+            return;
+        }
+        bool isOfSubSys = !string.IsNullOrWhiteSpace(subSystemName);
+        if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Savable")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Savable");
         }
-        var f = File.CreateText("Assets/Scripts/" + (string.IsNullOrWhiteSpace(subSystemName) ? "" : ("SubSystem/" + subSystemName + "/")) + "Savable/" + name + ".cs");
+        var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Savable/" + name + ".cs");
         f.Write(
 @"using System.Collections;
 using System.Collections.Generic;
@@ -282,9 +324,14 @@ namespace GameSystem
         /// </summary>")) + @"
         [CreateAssetMenu(fileName = " + "\"" + name + "\", menuName = \"Savable/" + name + "\"" + @")]
         public class " + name + @" : SavableObject
-        {
+        {" + (isOfSubSys ? @"
+            [MinsHeader(" + "\"SavableObject of " + subSystemName + "\", SummaryType.PreTitleSavable, -1)]" : "") + @"
+            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.TitleGreen, 0)]
+            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+
             //Your Data here
-            //public float data1;
+            [Label]
+            public float data1;
 
             //APPLY the data to game
             public override void ApplyData()
@@ -306,6 +353,7 @@ namespace GameSystem
 
     }
 
+    private static System.Text.RegularExpressions.Regex wordReg = new System.Text.RegularExpressions.Regex("^\\w+$");
     private string[] subSystemSettings = null;
     public enum EditorMode
     {
@@ -316,12 +364,16 @@ namespace GameSystem
     }
     private EditorMode editorMode;
     private string subSystemName = "";
+    private string subSystemTitle = "";
     private string subSystemComment = "";
     private string linkerName = "";
+    private string linkerTitle = "";
     private string linkerComment = "";
     private string operatorName = "";
+    private string operatorTitle = "";
     private string operatorComment = "";
     private string savableName = "";
+    private string savableTitle = "";
     private string savableComment = "";
     private GUIStyle headerStyle;
     private GUIStyle HeaderStyle
@@ -492,33 +544,57 @@ namespace GameSystem
         switch (editorMode)
         {
             case EditorMode.SubSystem:
+                EditorGUI.BeginChangeCheck();
                 subSystemName = TextArea("Sub System Name", subSystemName);
+                if (EditorGUI.EndChangeCheck()) subSystemTitle = subSystemName;
+                subSystemTitle = TextArea("Sub System Title", subSystemTitle);
                 subSystemComment = TextArea("Comment", subSystemComment);
                 Label("自动生成一个子系统 Sub System");
                 Label("由于实在无法把生成代码与生成配置文件功能做到一起，生成新系统时，请依次点这两个按钮。");
-                if (GUILayout.Button("Add", BtnStyle)) AddSubSystem(subSystemName, subSystemComment);
+                if (GUILayout.Button("Add", BtnStyle)) AddSubSystem(subSystemName, subSystemTitle, subSystemComment);
                 if (GUILayout.Button("Create Setting Asset", BtnStyle)) CreateSettingAsset();
                 break;
             case EditorMode.Linker:
+                EditorGUI.BeginChangeCheck();
                 linkerName = TextArea("Linker Name", linkerName);
+                if (EditorGUI.EndChangeCheck()) linkerTitle = linkerName;
+                linkerTitle = TextArea("Linker Title", linkerTitle);
                 linkerComment = TextArea("Comment", linkerComment);
                 Label("自动生成一个连接节点 Linker，用于连接和处理数据。");
-                if (GUILayout.Button("Add", BtnStyle)) AddLinker(linkerName, linkerComment);
-                if (GUILayout.Button("Add To Current SubSystem", BtnStyle)) AddLinker(linkerName, linkerComment, subSystemName);
+                if (GUILayout.Button("Add", BtnStyle)) AddLinker(linkerName, linkerTitle, linkerComment);
+                if (GUILayout.Button("Add To Current SubSystem", BtnStyle))
+                {
+                    if (string.IsNullOrWhiteSpace(subSystemName)) EditorUtility.DisplayDialog("Minstreams工具箱", "请先在‘数字导航’一栏中选择子系统", "好的");
+                    else AddLinker(linkerName, linkerTitle, linkerComment, subSystemName);
+                }
                 break;
             case EditorMode.Operator:
+                EditorGUI.BeginChangeCheck();
                 operatorName = TextArea("Operator Name", operatorName);
+                if (EditorGUI.EndChangeCheck()) operatorTitle = operatorName;
+                operatorTitle = TextArea("Operator Title", operatorTitle);
                 operatorComment = TextArea("Comment", operatorComment);
                 Label("自动生成一个操作节点 Operator，用于执行具体动作。");
-                if (GUILayout.Button("Add", BtnStyle)) AddOperator(operatorName, operatorComment);
-                if (GUILayout.Button("Add To Current SubSystem", BtnStyle)) AddOperator(operatorName, operatorComment, subSystemName);
+                if (GUILayout.Button("Add", BtnStyle)) AddOperator(operatorName, operatorTitle, operatorComment);
+                if (GUILayout.Button("Add To Current SubSystem", BtnStyle))
+                {
+                    if (string.IsNullOrWhiteSpace(subSystemName)) EditorUtility.DisplayDialog("Minstreams工具箱", "请先在‘数字导航’一栏中选择子系统", "好的");
+                    else AddOperator(operatorName, operatorTitle, operatorComment, subSystemName);
+                }
                 break;
             case EditorMode.Savable:
+                EditorGUI.BeginChangeCheck();
                 savableName = TextArea("Savable Name", savableName);
+                if (EditorGUI.EndChangeCheck()) savableTitle = savableName;
+                savableTitle = TextArea("Savable Title", savableTitle);
                 savableComment = TextArea("Comment", savableComment);
                 Label("自动生成一个可存储对象SavableObject，用于持久化存储数据。");
-                if (GUILayout.Button("Add", BtnStyle)) AddSavable(savableName, savableComment);
-                if (GUILayout.Button("Add To Current SubSystem", BtnStyle)) AddSavable(savableName, savableComment, subSystemName);
+                if (GUILayout.Button("Add", BtnStyle)) AddSavable(savableName, savableTitle, savableComment);
+                if (GUILayout.Button("Add To Current SubSystem", BtnStyle))
+                {
+                    if (string.IsNullOrWhiteSpace(subSystemName)) EditorUtility.DisplayDialog("Minstreams工具箱", "请先在‘数字导航’一栏中选择子系统", "好的");
+                    else AddSavable(savableName, savableTitle, savableComment, subSystemName);
+                }
                 break;
         }
         Separator();

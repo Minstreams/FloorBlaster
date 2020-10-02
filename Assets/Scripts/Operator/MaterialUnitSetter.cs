@@ -9,6 +9,14 @@ namespace GameSystem
         [AddComponentMenu("Operator/MaterialUnitSetter")]
         public class MaterialUnitSetter : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Material Unit Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label("Mat")]
             public Material[] mats;
             [System.Serializable]
             public struct MaterialPair
@@ -23,9 +31,11 @@ namespace GameSystem
                 }
             }
 
+            [Label("Pair")]
             public List<MaterialPair> extraPairs;
             private List<MaterialPair> innerPairs;
 
+            [Label]
             public int index;
 
             private void Awake()
@@ -77,6 +87,7 @@ namespace GameSystem
                     }
             }
 
+            [ContextMenu("ResetAll")]
             public void ResetAll()
             {
                 foreach (MaterialPair mp in innerPairs)

@@ -9,9 +9,13 @@ namespace GameSystem
         [AddComponentMenu("Linker/LoopLinker")]
         public class LoopLinker : MonoBehaviour
         {
+            //Private Here
             private int index = 0;
 
+            [MinsHeader("Loop Linker", SummaryType.TitleCyan, 0)]
+
             //Output
+            [MinsHeader("Output", SummaryType.Header, 3)]
             public SimpleEvent[] outputs;
 
             //Input

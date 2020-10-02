@@ -9,8 +9,20 @@ namespace GameSystem
         [AddComponentMenu("Operator/TheMatrix/SavableObjectOperator")]
         public class SavableObjectOperator : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Operator of TheMatrix", SummaryType.PreTitleOperator, -1)]
+            [MinsHeader("Savable Object Operator", SummaryType.TitleOrange, 0)]
+            [MinsHeader("此操作节点用来测试游戏可保存的持久化数据", SummaryType.CommentCenter, 1)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public Savable.SavableObject target;
+            [Label(true)]
             public bool saveOnDestroy;
+            [Label(true)]
             public bool loadOnStart;
 
             private void OnDestroy()

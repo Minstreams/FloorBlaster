@@ -9,8 +9,18 @@ namespace GameSystem
         [AddComponentMenu("Operator/MaterialFloatSetter")]
         public class MaterialFloatSetter : MonoBehaviour
         {
+#if UNITY_EDITOR
+            [MinsHeader("Material Float Setter", SummaryType.TitleYellow, 0)]
+            [ConditionalShow, SerializeField] private bool useless;
+#endif
+
+            //Data
+            [MinsHeader("Data", SummaryType.Header, 2)]
+            [Label]
             public float target;
+            [Label]
             public float time = 0.5f;
+            [Label]
             public string paramName = "_EmissionFactor";
             [System.Serializable]
             public struct MaterialFloatPair
@@ -20,16 +30,18 @@ namespace GameSystem
                 [HideInInspector]
                 public float value;
             }
+            [Label("Mat-Float Pair")]
             public MaterialFloatPair[] materialFloatPairs;
 
+            [Label(true)]
             public bool setOnStart = true;
+            [Label(true)]
+            public bool setOnEnable;
+
             private void Start()
             {
                 if (setOnStart) Set();
             }
-
-            public bool setOnEnable;
-
             private void OnEnable()
             {
                 if (setOnEnable) Set();

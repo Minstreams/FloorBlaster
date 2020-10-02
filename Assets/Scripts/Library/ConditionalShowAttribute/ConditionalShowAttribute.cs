@@ -10,16 +10,27 @@ public class ConditionalShowAttribute : PropertyAttribute
     //条件字段，必须是整型
     public string ConditionalIntField = "";
     //预期值
-    public int ExpectedValue;
+    public int[] ExpectedValues;
+    public bool Disabled = false;
 
-    public ConditionalShowAttribute(string conditionalIntField, int expectedValue)
+    public ConditionalShowAttribute(string conditionalIntField, bool expectedValue)
     {
         this.ConditionalIntField = conditionalIntField;
-        this.ExpectedValue = expectedValue;
+        this.ExpectedValues = new int[] { 1 };
     }
     public ConditionalShowAttribute(string conditionalIntField, object expectedValue)
     {
         this.ConditionalIntField = conditionalIntField;
-        this.ExpectedValue = (int)expectedValue;
+        this.ExpectedValues = new int[] { (int)expectedValue };
+    }
+    public ConditionalShowAttribute(string conditionalIntField, params object[] expectedValues)
+    {
+        this.ConditionalIntField = conditionalIntField;
+        this.ExpectedValues = new int[expectedValues.Length];
+        for (int i = 0; i < expectedValues.Length; i++) this.ExpectedValues[i] = (int)expectedValues[i];
+    }
+    public ConditionalShowAttribute()
+    {
+        Disabled = true;
     }
 }
