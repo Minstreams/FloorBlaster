@@ -22,7 +22,7 @@ namespace GameSystem
             public int clipIndex;
 
             //Input
-            [ContextMenu("Invoke")]
+            [ContextMenu("Change Music")]
             public override void Invoke()
             {
                 base.Invoke();

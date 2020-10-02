@@ -106,6 +106,13 @@ namespace GameSystem
         {
             get
             {
+#if UNITY_EDITOR
+                if (!UnityEditor.EditorApplication.isPlaying)
+                {
+                    UnityEditor.EditorUtility.DisplayDialog("The Matrix Warning", "在编辑器状态下调用游戏代码很危险，请在游戏中调用", "OK");
+                    return null;
+                }
+#endif
                 if (instance == null)
                 {
                     Debug.LogError("没有加载TheMatrix！");

@@ -21,7 +21,7 @@ namespace GameSystem
             public AudioSystem.Sound sound;
 
             //Input
-            [ContextMenu("Invoke")]
+            [ContextMenu("Play Sound")]
             public override void Invoke()
             {
                 base.Invoke();

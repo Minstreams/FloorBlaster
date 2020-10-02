@@ -131,6 +131,8 @@ GameObject:
   m_Component:
   - component: {fileID: 253122320}
   - component: {fileID: 253122318}
+  - component: {fileID: 253122321}
+  - component: {fileID: 253122319}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -147,12 +149,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 253122317}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ad6fa299bac4444c97fdb43041f5e57, type: 3}
+  m_Script: {fileID: 11500000, guid: ce062b11676412f4fa882be190dfcd75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  abc: 0
-  ccd: 
-  cAdacd: 0
+  useless: 0
+  message: 0
+  sendOnStart: 0
+--- !u!114 &253122319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253122317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f22580e2d311c5544a642fb1d75c8f34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useless: 0
+  data:
+    loop: 0
+    pitch: 1
+    volume: 1
+  output:
+    m_PersistentCalls:
+      m_Calls: []
+  sound: 0
 --- !u!4 &253122320
 Transform:
   m_ObjectHideFlags: 0
@@ -167,6 +190,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &253122321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253122317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b958d60a0d686a4bb25861099731959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: 0
+  anyKey: 0
+  keyOutput:
+    m_PersistentCalls:
+      m_Calls: []
+  keyDownOutput:
+    m_PersistentCalls:
+      m_Calls: []
+  keyUpOutput:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &759786283
 GameObject:
   m_ObjectHideFlags: 0
