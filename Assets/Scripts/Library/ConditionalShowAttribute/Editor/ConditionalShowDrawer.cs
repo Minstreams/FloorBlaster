@@ -19,24 +19,33 @@ public class ConditionalShowDrawer : PropertyDrawer
         }
     }
 
+    ConditionalShowAttribute condSAtt { get { return (ConditionalShowAttribute)attribute; } }
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         if (IsConditionMet(property))
         {
             //条件满足，开始绘制
-            bool wasEnabled = GUI.enabled;
-            GUI.enabled = true;
             if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
             else
             {
-                LabelDrawer.DrawLabel(position, property, ((ConditionalShowAttribute)attribute).Label);
+                LabelDrawer.DrawLabel(position, property, condSAtt.Label);
             }
-            GUI.enabled = wasEnabled;
+        }
+        else if (condSAtt.AlwaysShow && Event.current.type == EventType.Repaint)
+        {
+            var tc = GUI.color;
+            GUI.color = Color.gray;
+            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
+            else
+            {
+                LabelDrawer.DrawLabel(position, property, condSAtt.Label);
+            }
+            GUI.color = tc;
         }
     }
     private bool IsConditionMet(SerializedProperty property)
     {
-        ConditionalShowAttribute condSAtt = (ConditionalShowAttribute)attribute;
         if (condSAtt.Disabled) return false;
         SerializedProperty sourcePropertyValue = property.serializedObject.FindProperty(condSAtt.ConditionalIntField);
         if (sourcePropertyValue == null)
@@ -53,7 +62,7 @@ public class ConditionalShowDrawer : PropertyDrawer
     }
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        if (IsConditionMet(property))
+        if (IsConditionMet(property) || condSAtt.AlwaysShow)
         {
             if (property.type.EndsWith("Event")) return UEDrawer.GetPropertyHeight(property, label);
             return LabelDrawer.GetHeight(property, label);

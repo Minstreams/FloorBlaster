@@ -13,7 +13,8 @@ public class ConditionalShowAttribute : PropertyAttribute
     public int[] ExpectedValues;
     public bool Disabled = false;
 
-    public string Label;
+    public string Label = "";
+    public bool AlwaysShow = false;
 
     public ConditionalShowAttribute(string conditionalIntField, bool expectedValue)
     {
