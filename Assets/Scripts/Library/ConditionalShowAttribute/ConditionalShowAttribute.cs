@@ -13,10 +13,12 @@ public class ConditionalShowAttribute : PropertyAttribute
     public int[] ExpectedValues;
     public bool Disabled = false;
 
+    public string Label;
+
     public ConditionalShowAttribute(string conditionalIntField, bool expectedValue)
     {
         this.ConditionalIntField = conditionalIntField;
-        this.ExpectedValues = new int[] { 1 };
+        this.ExpectedValues = new int[] { expectedValue ? 1 : 0 };
     }
     public ConditionalShowAttribute(string conditionalIntField, object expectedValue)
     {

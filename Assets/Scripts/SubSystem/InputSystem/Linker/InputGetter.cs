@@ -15,7 +15,7 @@ namespace GameSystem
 
             //Data
             [MinsHeader("Data", SummaryType.Header, 2)]
-            [Label]
+            [ConditionalShow("anyKey", false, Label = "ADD")]
             public InputSystem.InputKey key;
             [Label]
             public bool anyKey;

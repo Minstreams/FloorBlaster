@@ -64,11 +64,16 @@ public class GameEditorExtension : EditorWindow
     /// <summary>
     /// 添加子系统
     /// </summary>
-    public static void AddSubSystem(string name, string title, string comment)
+    public static void AddSubSystem(string name, string comment)
     {
         if (!wordReg.IsMatch(name))
         {
             EditorUtility.DisplayDialog("Minstreams工具箱", "Invalid Name", "~");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            EditorUtility.DisplayDialog("Minstreams工具箱", "Please write some comment!", "Ok~");
             return;
         }
         if (!name.EndsWith("System")) name += "System";
@@ -92,7 +97,11 @@ namespace GameSystem
         [CreateAssetMenu(fileName = " + "\"" + name + "Setting\", menuName = \"系统配置文件/" + name + "Setting\"" + @")]
         public class " + name + @"Setting : ScriptableObject
         {
-            //data definition here
+            //[MinsHeader(" + "\"" + name + " Setting\", SummaryType.Title, -2)]" + @"
+            //[MinsHeader(" + "\"" + comment + "\", SummaryType.CommentCenter, -1)]" + @"
+
+            //[MinsHeader(" + "\"Data\", SummaryType.Header), Space(16)]" + @"
+
         }
     }
 }");
@@ -108,7 +117,7 @@ using GameSystem.Setting;
 namespace GameSystem
 {
     /// <summary>
-    /// " + title + " - " + comment + @"
+    /// " + comment + @"
     /// </summary>
     public class " + name + @" : SubSystem<" + name + @"Setting>
     {
@@ -149,12 +158,12 @@ namespace GameSystem
         if (!subSystemName.EndsWith("System")) subSystemName += "System";
         if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName))
         {
-            Debug.LogAssertion(subSystemName + " doesn't exist!");
+            EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + " doesn't exist!", "Oh");
             return;
         }
         if (File.Exists("Assets/Resources/System/" + subSystemName + "Setting.asset"))
         {
-            Debug.LogAssertion(subSystemName + " Setting Asset already exist!");
+            EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + " Setting Asset already exist!", "Oh");
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<Object>("Assets/Resources/System/" + subSystemName + "Setting.asset");
             return;
         }
@@ -189,6 +198,11 @@ namespace GameSystem
         if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
+            if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName))
+            {
+                EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + " doesn't exist!", "Oh");
+                return;
+            }
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Linker")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Linker");
         }
         var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Linker/" + name + ".cs");
@@ -251,6 +265,11 @@ namespace GameSystem
         if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
+            if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName))
+            {
+                EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + " doesn't exist!", "Oh");
+                return;
+            }
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Operator")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Operator");
         }
         var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Operator/" + name + ".cs");
@@ -306,6 +325,11 @@ namespace GameSystem
         if (isOfSubSys)
         {
             if (!subSystemName.EndsWith("System")) subSystemName += "System";
+            if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName))
+            {
+                EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + " doesn't exist!", "Oh");
+                return;
+            }
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + subSystemName + "/Savable")) AssetDatabase.CreateFolder("Assets/Scripts/SubSystem/" + subSystemName, "Savable");
         }
         var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Savable/" + name + ".cs");
@@ -364,7 +388,6 @@ namespace GameSystem
     }
     private EditorMode editorMode;
     private string subSystemName = "";
-    private string subSystemTitle = "";
     private string subSystemComment = "";
     private string linkerName = "";
     private string linkerTitle = "";
@@ -544,14 +567,11 @@ namespace GameSystem
         switch (editorMode)
         {
             case EditorMode.SubSystem:
-                EditorGUI.BeginChangeCheck();
                 subSystemName = TextArea("Sub System Name", subSystemName);
-                if (EditorGUI.EndChangeCheck()) subSystemTitle = subSystemName;
-                subSystemTitle = TextArea("Sub System Title", subSystemTitle);
                 subSystemComment = TextArea("Comment", subSystemComment);
                 Label("自动生成一个子系统 Sub System");
                 Label("由于实在无法把生成代码与生成配置文件功能做到一起，生成新系统时，请依次点这两个按钮。");
-                if (GUILayout.Button("Add", BtnStyle)) AddSubSystem(subSystemName, subSystemTitle, subSystemComment);
+                if (GUILayout.Button("Add", BtnStyle)) AddSubSystem(subSystemName, subSystemComment);
                 if (GUILayout.Button("Create Setting Asset", BtnStyle)) CreateSettingAsset();
                 break;
             case EditorMode.Linker:

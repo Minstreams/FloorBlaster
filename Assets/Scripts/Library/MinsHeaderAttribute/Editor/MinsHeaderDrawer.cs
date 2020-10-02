@@ -25,7 +25,7 @@ public class MinsHeaderDrawer : DecoratorDrawer
                 {
                     style.wordWrap = true;
                 }
-
+                
             }
             return style;
         }
@@ -39,7 +39,7 @@ public class MinsHeaderDrawer : DecoratorDrawer
     {
         if (Event.current.type == EventType.Repaint && width != position.width) width = position.width;
         GUIContent summary = new GUIContent(sa.Summary);
-        var h = Style.CalcHeight(summary, position.width);
+        var h = Style.CalcHeight(summary, width);
         Rect headerRect = new Rect(position.x, position.y + 8, position.width, h);
         EditorGUI.LabelField(headerRect, summary, Style);
     }

@@ -159,10 +159,10 @@ namespace GameSystem
 
             private void OnDrawGizmos()
             {
-                Gizmos.color = Color.gray;
+                Gizmos.color = new Color(0.2f, 0.2f, 0.2f, 0.1f);
                 Gizmos.DrawWireCube(transform.position, Vector3.one * 0.1f);
                 Gizmos.DrawLine(transform.position, transform.position + (Vector3)(transform.localToWorldMatrix * targetPosition));
-                Gizmos.color = new Color(0.7f, 0.5f, 0.5f);
+                Gizmos.color = new Color(0.7f, 0.5f, 0.5f, 0.1f);
                 Gizmos.DrawWireCube(transform.position + (Vector3)(transform.localToWorldMatrix * targetPosition), Vector3.one * 0.1f);
                 Gizmos.color = Color.white;
             }

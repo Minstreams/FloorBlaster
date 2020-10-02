@@ -27,7 +27,10 @@ public class ConditionalShowDrawer : PropertyDrawer
             bool wasEnabled = GUI.enabled;
             GUI.enabled = true;
             if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
-            else EditorGUI.PropertyField(position, property, label);
+            else
+            {
+                LabelDrawer.DrawLabel(position, property, ((ConditionalShowAttribute)attribute).Label);
+            }
             GUI.enabled = wasEnabled;
         }
     }
@@ -53,7 +56,7 @@ public class ConditionalShowDrawer : PropertyDrawer
         if (IsConditionMet(property))
         {
             if (property.type.EndsWith("Event")) return UEDrawer.GetPropertyHeight(property, label);
-            return EditorGUI.GetPropertyHeight(property, label);
+            return LabelDrawer.GetHeight(property, label);
         }
         return -EditorGUIUtility.standardVerticalSpacing;
     }

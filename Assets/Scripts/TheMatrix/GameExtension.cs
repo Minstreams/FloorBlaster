@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace GameSystem
 {
-    #region 事件类型定义
+    #region 事件类型定义 (必须以Event作为名称结尾)
     [System.Serializable]
     public class SimpleEvent : UnityEvent { }
     [System.Serializable]
@@ -27,7 +27,7 @@ namespace GameSystem
     #endregion
 
 
-    #region EnumMap Class Definition
+    #region EnumMap Class Definition (必须以Map作为名称结尾)
     [System.Serializable]
     public class GameSceneMap : EnumMap<TheMatrix.GameScene, string> { }
     [System.Serializable]
