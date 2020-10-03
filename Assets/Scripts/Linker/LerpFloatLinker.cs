@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/LerpFloatLinker")]
+        [AddComponentMenu("|Linker/LerpFloatLinker")]
         public class LerpFloatLinker : MonoBehaviour
         {
             [MinsHeader("Lerp Float Linker", SummaryType.TitleCyan, 0)]

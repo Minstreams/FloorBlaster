@@ -10,21 +10,32 @@ namespace GameSystem
         [CreateAssetMenu(fileName = "InputSolutionData", menuName = "Savable/InputSolutionData")]
         public class InputSolutionData : SavableObject
         {
-            [MinsHeader("SavableObject of InputSystem", SummaryType.PreTitleSavable, -1)]
-            [MinsHeader("Input Solution Data", SummaryType.TitleGreen, 0)]
-            [MinsHeader("用来存储用户的按键设置", SummaryType.CommentCenter, 1)]
+            /// <summary>
+            /// 主要按键
+            /// </summary>
+            [MinsHeader("SavableObject of InputSystem", SummaryType.PreTitleSavable, -3)]
+            [MinsHeader("Input Solution Data", SummaryType.TitleGreen, -2)]
+            [MinsHeader("用来存储用户的按键设置", SummaryType.CommentCenter, -1)]
 
-            [MinsHeader("所有输入按键种类", SummaryType.Header, 2)]
-            public InputKeyMap Keys;
+            [MinsHeader("KeyBoard", SummaryType.SubTitle)]
+            [MinsHeader("主要按键", SummaryType.Header, 1), Space(16)]
+            public InputKeyMap MainKeys;
+            /// <summary>
+            /// 次要按键
+            /// </summary>
+            [MinsHeader("次要按键", SummaryType.Header), Space(16)]
+            public InputKeyMap SideKeys;
 
             public override void ApplyData()
             {
-                InputSystem.Setting.Keys = Keys;
+                InputSystem.Setting.MainKeys = MainKeys;
+                InputSystem.Setting.SideKeys = SideKeys;
             }
 
             public override void UpdateData()
             {
-                Keys = InputSystem.Setting.Keys;
+                MainKeys = InputSystem.Setting.MainKeys;
+                SideKeys = InputSystem.Setting.SideKeys;
             }
         }
 

@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86ed657e309bd7d4cbf4cfef1352763f, type: 3}
   m_Name: InputSystemSetting
   m_EditorClassIdentifier: 
-  Keys:
-    list: 00000000
+  MainKeys:
+    list: 77000000730000006100000064000000
+  SideKeys:
+    list: 11010000120100001401000013010000

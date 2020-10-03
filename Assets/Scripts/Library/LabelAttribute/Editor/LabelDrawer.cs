@@ -20,9 +20,9 @@ public class LabelDrawer : PropertyDrawer
         Rect windowRect = new Rect(position.x, position.y + 2, position.width, position.height - 4);
         Rect propRect = new Rect(position.x + 4, position.y + 6, position.width - 8, position.height - 12);
 
-        GUI.Box(windowRect, GUIContent.none, property.propertyType == SerializedPropertyType.Generic ? "FrameBox" : "button");
         if (!isConst || !EditorApplication.isPlaying)
         {
+            GUI.Box(windowRect, GUIContent.none, property.propertyType == SerializedPropertyType.Generic ? "FrameBox" : "button");
             EditorGUI.PropertyField(propRect, property, new GUIContent(string.IsNullOrEmpty(label) ? property.displayName : (property.displayName.StartsWith("Element") ? label + property.displayName.Substring(7) : label)), true);
         }
         else if (Event.current.type == EventType.Repaint)
@@ -30,6 +30,7 @@ public class LabelDrawer : PropertyDrawer
             // 播放状态下禁止编辑
             var tc = GUI.color;
             GUI.color = Color.gray;
+            GUI.Box(windowRect, GUIContent.none, property.propertyType == SerializedPropertyType.Generic ? "FrameBox" : "button");
             EditorGUI.PropertyField(propRect, property, new GUIContent(string.IsNullOrEmpty(label) ? property.displayName : (property.displayName.StartsWith("Element") ? label + property.displayName.Substring(7) : label)), true);
             GUI.color = tc;
         }

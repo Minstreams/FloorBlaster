@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/Transformer")]
+        [AddComponentMenu("|Operator/Transformer")]
         public class Transformer : MonoBehaviour
         {
 #if UNITY_EDITOR

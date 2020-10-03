@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/SimpleVec2Linker")]
+        [AddComponentMenu("|Linker/SimpleVec2Linker")]
         public class SimpleVec2Linker : MonoBehaviour
         {
             [MinsHeader("Simple Vec2 Linker", SummaryType.TitleCyan, 0)]

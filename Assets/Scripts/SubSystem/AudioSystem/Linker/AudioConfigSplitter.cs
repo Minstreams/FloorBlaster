@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/AudioSystem/AudioConfigSplitter")]
+        [AddComponentMenu("[AudioSystem]/Linker/AudioConfigSplitter")]
         public class AudioConfigSplitter : MonoBehaviour
         {
             [MinsHeader("Linker of AudioSystem", SummaryType.PreTitleLinker, -1)]

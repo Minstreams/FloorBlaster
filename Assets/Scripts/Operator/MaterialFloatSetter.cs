@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/MaterialFloatSetter")]
+        [AddComponentMenu("|Operator/MaterialFloatSetter")]
         public class MaterialFloatSetter : MonoBehaviour
         {
 #if UNITY_EDITOR

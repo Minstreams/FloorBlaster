@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/CanvasMaterialFloatSetter")]
+        [AddComponentMenu("|Operator/CanvasMaterialFloatSetter")]
         public class CanvasMaterialFloatSetter : MonoBehaviour
         {
             [MinsHeader("Canvas Material Float Setter", SummaryType.TitleYellow, 0)]

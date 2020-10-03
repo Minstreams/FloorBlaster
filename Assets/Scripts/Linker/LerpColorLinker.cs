@@ -7,7 +7,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/LerpColorLinker")]
+        [AddComponentMenu("|Linker/LerpColorLinker")]
         public class LerpColorLinker : MonoBehaviour
         {
             [MinsHeader("Lerp Color Linker", SummaryType.TitleCyan, 0)]

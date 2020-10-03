@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/TimerLinker")]
+        [AddComponentMenu("|Linker/TimerLinker")]
         public class TimerLinker : MonoBehaviour
         {
             [MinsHeader("Timer Linker", SummaryType.TitleCyan, 0)]

@@ -11,7 +11,7 @@ namespace GameSystem
         /// <summary>
         /// simply keep rotating around an axis
         /// </summary>
-        [AddComponentMenu("Operator/AutoRotater")]
+        [AddComponentMenu("|Operator/AutoRotater")]
         public class AutoRotater : MonoBehaviour
         {
             [MinsHeader("Auto Rotater", SummaryType.TitleYellow, 0)]

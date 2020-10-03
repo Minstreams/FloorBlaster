@@ -219,7 +219,7 @@ namespace GameSystem
         @"/// <summary>
         /// " + comment + @"
         /// </summary>")) + @"
-        [AddComponentMenu(" + "\"Linker/" + (isOfSubSys ? (subSystemName + "/") : "") + name + "\"" + @")]
+        [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Linker/" + name + "\"" + @")]
         public class " + name + @" : MonoBehaviour
         {
 #if UNITY_EDITOR" + (isOfSubSys ? @"
@@ -286,7 +286,7 @@ namespace GameSystem
         @"/// <summary>
         /// " + comment + @"
         /// </summary>")) + @"
-        [AddComponentMenu(" + "\"Operator/" + (isOfSubSys ? (subSystemName + "/") : "") + name + "\"" + @")]
+        [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Operator/" + name + "\"" + @")]
         public class " + name + @" : MonoBehaviour
         {
 #if UNITY_EDITOR" + (isOfSubSys ? @"
@@ -505,13 +505,13 @@ namespace GameSystem
         Separator();
         GUILayout.Label(title, HeaderStyle, GUILayout.ExpandWidth(true));
     }
-    private string TextArea(string name, string target)
+    private string TextArea(string name, string target, int maxLength = 24)
     {
         string result;
         GUILayout.BeginHorizontal();
         {
             GUILayout.Label(name, "ProfilerSelectedLabel", GUILayout.ExpandWidth(false), GUILayout.Height(EditorGUIUtility.singleLineHeight * 1.2f));
-            result = GUILayout.TextField(target, 24, "SearchTextField");
+            result = GUILayout.TextField(target, maxLength, "SearchTextField");
         }
         GUILayout.EndHorizontal();
         return result;
@@ -568,7 +568,7 @@ namespace GameSystem
         {
             case EditorMode.SubSystem:
                 subSystemName = TextArea("Sub System Name", subSystemName);
-                subSystemComment = TextArea("Comment", subSystemComment);
+                subSystemComment = TextArea("Comment", subSystemComment, 64);
                 Label("自动生成一个子系统 Sub System");
                 Label("由于实在无法把生成代码与生成配置文件功能做到一起，生成新系统时，请依次点这两个按钮。");
                 if (GUILayout.Button("Add", BtnStyle)) AddSubSystem(subSystemName, subSystemComment);
@@ -579,7 +579,7 @@ namespace GameSystem
                 linkerName = TextArea("Linker Name", linkerName);
                 if (EditorGUI.EndChangeCheck()) linkerTitle = linkerName;
                 linkerTitle = TextArea("Linker Title", linkerTitle);
-                linkerComment = TextArea("Comment", linkerComment);
+                linkerComment = TextArea("Comment", linkerComment, 64);
                 Label("自动生成一个连接节点 Linker，用于连接和处理数据。");
                 if (GUILayout.Button("Add", BtnStyle)) AddLinker(linkerName, linkerTitle, linkerComment);
                 if (GUILayout.Button("Add To Current SubSystem", BtnStyle))
@@ -593,7 +593,7 @@ namespace GameSystem
                 operatorName = TextArea("Operator Name", operatorName);
                 if (EditorGUI.EndChangeCheck()) operatorTitle = operatorName;
                 operatorTitle = TextArea("Operator Title", operatorTitle);
-                operatorComment = TextArea("Comment", operatorComment);
+                operatorComment = TextArea("Comment", operatorComment, 64);
                 Label("自动生成一个操作节点 Operator，用于执行具体动作。");
                 if (GUILayout.Button("Add", BtnStyle)) AddOperator(operatorName, operatorTitle, operatorComment);
                 if (GUILayout.Button("Add To Current SubSystem", BtnStyle))
@@ -607,7 +607,7 @@ namespace GameSystem
                 savableName = TextArea("Savable Name", savableName);
                 if (EditorGUI.EndChangeCheck()) savableTitle = savableName;
                 savableTitle = TextArea("Savable Title", savableTitle);
-                savableComment = TextArea("Comment", savableComment);
+                savableComment = TextArea("Comment", savableComment, 64);
                 Label("自动生成一个可存储对象SavableObject，用于持久化存储数据。");
                 if (GUILayout.Button("Add", BtnStyle)) AddSavable(savableName, savableTitle, savableComment);
                 if (GUILayout.Button("Add To Current SubSystem", BtnStyle))

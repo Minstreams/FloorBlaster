@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using GameSystem.Setting;
 using GameSystem.Savable;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace GameSystem
 {
@@ -13,29 +16,17 @@ namespace GameSystem
     [DisallowMultipleComponent]
     public class TheMatrix : MonoBehaviour
     {
+        // 场景 -------------------------------------
         /// <summary>
-        /// 配置引用
+        /// 游戏场景枚举
         /// </summary>
-        public static TheMatrixSetting Setting { get { return Resources.Load<TheMatrixSetting>("System/TheMatrixSetting"); } }
-
-        /// <summary>
-        /// 游戏初始化委托，在进入游戏第一个场景时调用
-        /// </summary>
-        public static event System.Action onGameAwake;
-        /// <summary>
-        /// 游戏开始委托，在主场景游戏开始时和游戏重新开始时调用
-        /// </summary>
-        public static event System.Action onGameStart;
-
         public enum GameScene
         {
             logo,
-            startMenu,
+            startScene,
         }
 
-
-        #region 【游戏流程】
-        //游戏流程----------------------------
+        // 游戏流程 ---------------------------------
         private IEnumerator _Awake()
         {
             onGameAwake?.Invoke();
@@ -59,7 +50,7 @@ namespace GameSystem
 
         private IEnumerator _Logo()
         {
-            SceneSystem.LoadScene(Setting.gameSceneMap[GameScene.logo]);
+            SceneSystem.LoadScene(GameScene.logo);
 
             //在进入每个状态前重置控制信息
             ResetGameMessage();
@@ -67,12 +58,7 @@ namespace GameSystem
             {
                 //提前return，延迟一帧开始检测
                 yield return 0;
-                if (GetGameMessage(GameMessage.Next))
-                {
-                    break;
-                    //StartCoroutine(_Start());
-                    //yield break;
-                }
+                if (GetGameMessage(GameMessage.Next)) break;
             }
 
             //不直接用嵌套，防止嵌套层数过深（是否有自动优化？没查到）
@@ -82,16 +68,51 @@ namespace GameSystem
         // 游戏开始
         private IEnumerator _Start()
         {
-            SceneSystem.LoadScene(Setting.gameSceneMap[GameScene.startMenu]);
+            SceneSystem.LoadScene(GameScene.startScene);
+            InputSystem.ChangeState(new InputSystem.MoveState());
 
             onGameStart?.Invoke();
             yield return 0;
         }
 
-        #endregion
 
 
+        #region 应用 & 参数 =================================
+        /// <summary>
+        /// 配置引用
+        /// </summary>
+        public static TheMatrixSetting Setting { get { return Resources.Load<TheMatrixSetting>("System/TheMatrixSetting"); } }
+        public static string GetScene(GameScene gameScene) { return Setting.gameSceneMap[gameScene]; }
 
+        private static TheMatrix instance;
+        public static TheMatrix Instance
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!EditorApplication.isPlaying)
+                {
+                    Dialog("在编辑器状态下调用游戏代码很危险，请在游戏中调用");
+                    return null;
+                }
+#endif
+                if (instance == null)
+                {
+                    Error("没有加载TheMatrix！");
+                }
+                return instance;
+            }
+        }
+
+
+        /// <summary>
+        /// 游戏初始化委托，在进入游戏第一个场景时调用
+        /// </summary>
+        public static event System.Action onGameAwake;
+        /// <summary>
+        /// 游戏开始委托，在主场景游戏开始时和游戏重新开始时调用
+        /// </summary>
+        public static event System.Action onGameStart;
 
 #if UNITY_EDITOR
         [MinsHeader("By Minstreams. The Matrix组件的核心，只能有一个。", SummaryType.CommentCenter)]
@@ -100,27 +121,12 @@ namespace GameSystem
         public bool testAll = false;
         [Label("是否测试文件保存", true)]
         public bool saveData = false;
+        [Label]
+        public bool debug = false;
 #endif
-        private static TheMatrix instance;
-        public static TheMatrix Instance
-        {
-            get
-            {
-#if UNITY_EDITOR
-                if (!UnityEditor.EditorApplication.isPlaying)
-                {
-                    UnityEditor.EditorUtility.DisplayDialog("The Matrix Warning", "在编辑器状态下调用游戏代码很危险，请在游戏中调用", "OK");
-                    return null;
-                }
-#endif
-                if (instance == null)
-                {
-                    Debug.LogError("没有加载TheMatrix！");
-                }
-                return instance;
-            }
-        }
+        #endregion
 
+        #region 游戏控制 ====================================
         //游戏控制----------------------------
         /// <summary>
         /// 记录游戏控制信息
@@ -148,6 +154,7 @@ namespace GameSystem
         /// <param name="message">信息</param>
         public static void SendGameMessage(GameMessage message)
         {
+            Debug("Receive Message: " + message);
             gameMessageReciver[(int)message] = true;
         }
         /// <summary>
@@ -157,8 +164,26 @@ namespace GameSystem
         {
             gameMessageReciver.Initialize();
         }
+        public static void Debug(string msg)
+        {
+#if UNITY_EDITOR
+            if (!Instance.debug) return;
+            UnityEngine.Debug.Log("【TheMatrix Debug】" + msg);
+#endif
+        }
+        public static void Error(string msg)
+        {
+            UnityEngine.Debug.LogError("【TheMatrix Debug】" + msg);
+        }
+        public static void Dialog(string msg, string ok = "OK")
+        {
+#if UNITY_EDITOR
+            EditorUtility.DisplayDialog("The Matrix", msg, ok);
+#endif
+        }
+        #endregion
 
-
+        #region 协程控制 ====================================
         //协程控制----------------------------
         private static Dictionary<System.Type, LinkedList<Coroutine>> routineDictionaty = new Dictionary<System.Type, LinkedList<Coroutine>>();
 
@@ -203,8 +228,9 @@ namespace GameSystem
             yield return inCoroutine;
             node.List.Remove(node);
         }
+        #endregion
 
-
+        #region 存档控制 ====================================
         //存档控制----------------------------
         private static void SaveTemporary(SavableObject data)
         {
@@ -212,7 +238,7 @@ namespace GameSystem
             data.UpdateData();
             string stream = JsonUtility.ToJson(data);
             PlayerPrefs.SetString(data.ToString(), stream);
-            Debug.Log(data.name + " \tsaved!");
+            Debug(data.name + " \tsaved!");
         }
         /// <summary>
         /// 手动保存一个对象
@@ -221,7 +247,7 @@ namespace GameSystem
         {
             SaveTemporary(data);
             PlayerPrefs.Save();
-            Debug.Log("Data saved to disc.");
+            Debug("Data saved to disc.");
         }
         /// <summary>
         /// 手动读取一个对象
@@ -230,13 +256,13 @@ namespace GameSystem
         {
             if (!PlayerPrefs.HasKey(data.ToString()))
             {
-                Debug.Log("No data found for " + data.name);
+                Debug("No data found for " + data.name);
                 return;
             }
             string stream = PlayerPrefs.GetString(data.ToString());
             JsonUtility.FromJsonOverwrite(stream, data);
             data.ApplyData();
-            Debug.Log(data.name + " \tloaded!");
+            Debug(data.name + " \tloaded!");
         }
 
         [ContextMenu("Save All Data")]
@@ -248,7 +274,7 @@ namespace GameSystem
                 SaveTemporary(so);
             }
             PlayerPrefs.Save();
-            Debug.Log("Data saved to disc.");
+            Debug("Data saved to disc.");
         }
         public void LoadAll()
         {
@@ -262,10 +288,11 @@ namespace GameSystem
         {
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
-            Debug.Log("All saved data deleted!");
+            Dialog("All saved data deleted!");
         }
+        #endregion
 
-
+        #region 游戏启动 ====================================
         //游戏启动----------------------------
         private void Awake()
         {
@@ -295,6 +322,7 @@ namespace GameSystem
                 foreach (SavableObject so in Setting.dataAutoSave)
                 {
                     so.ApplyData();
+                    Debug("All Savable applied.");
                 }
             }
 #endif
@@ -305,7 +333,20 @@ namespace GameSystem
             if (saveData)
 #endif
                 SaveAll();
+#if UNITY_EDITOR
+            else
+            {
+                foreach (SavableObject so in Setting.dataAutoSave)
+                {
+                    so.UpdateData();
+                    EditorUtility.SetDirty(so);
+                    AssetDatabase.SaveAssets();
+                    Debug("All Savable updated. And assets saved.");
+                }
+            }
+#endif
         }
+        #endregion
     }
 
     /// <summary>

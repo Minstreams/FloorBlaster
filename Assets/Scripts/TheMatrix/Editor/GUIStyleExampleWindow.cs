@@ -30,9 +30,10 @@ public sealed class GUIStyleExampleWindow : EditorWindow
     };
     private GUIStyle[] sList = null;
     private int length = 0;
-    private void OnEnable()
+    public bool inGameSkin = false;
+    public void Init()
     {
-        GUISkin skin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Scene);
+        GUISkin skin = EditorGUIUtility.GetBuiltinSkin(inGameSkin ? EditorSkin.Game : EditorSkin.Scene);
         sList = skin.customStyles;
         length = dList.Length + sList.Length;
     }
@@ -46,6 +47,20 @@ public sealed class GUIStyleExampleWindow : EditorWindow
         w.wantsMouseEnterLeaveWindow = false;
         w.wantsMouseMove = false;
         w.autoRepaintOnSceneChange = false;
+        w.titleContent = new GUIContent("GUIStyle 样例窗口");
+        w.inGameSkin = false;
+        w.Init();
+    }
+    [MenuItem("MatrixTool/GUIStyle 样例窗口 - InGameSkin")]
+    private static void Example_InGameSkin()
+    {
+        var w = GetWindow<GUIStyleExampleWindow>();
+        w.wantsMouseEnterLeaveWindow = false;
+        w.wantsMouseMove = false;
+        w.autoRepaintOnSceneChange = false;
+        w.titleContent = new GUIContent("GUIStyle 样例窗口 - InGameSkin");
+        w.inGameSkin = true;
+        w.Init();
     }
 
     private int page = 0;

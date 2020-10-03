@@ -51,6 +51,7 @@ public class EnumMapDrawer<ET> : PropertyDrawer
             Rect preRect = new Rect(outerRect.x - 6, outerRect.y + 4, 12, 12);
             Rect startRect = new Rect(outerRect.x, outerRect.y, outerRect.width + 16, outerRect.height);
             GUI.Label(startRect, label, "AnimationEventTooltip");
+            EditorGUI.BeginChangeCheck();
             for (int i = 0; i < enums.Length; ++i)
             {
                 propRect.y += EditorGUIUtility.singleLineHeight + 14;
@@ -59,6 +60,11 @@ public class EnumMapDrawer<ET> : PropertyDrawer
                 GUI.Button(preRect, GUIContent.none, "Radio");
                 GUI.Box(outerRect, GUIContent.none, "window");
                 EditorGUI.PropertyField(propRect, list.GetArrayElementAtIndex(i), new GUIContent(enums[i]));
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                Debug.Log("Save Assets!");
+                AssetDatabase.SaveAssets();
             }
         }
 

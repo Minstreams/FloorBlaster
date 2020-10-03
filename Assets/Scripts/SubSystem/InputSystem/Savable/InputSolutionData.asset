@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1bf4e14658dd1a4cb7779c94e900d84, type: 3}
   m_Name: InputSolutionData
   m_EditorClassIdentifier: 
-  Keys:
-    list: 07010000
+  MainKeys:
+    list: 77000000730000006100000064000000
+  SideKeys:
+    list: 11010000120100001401000013010000

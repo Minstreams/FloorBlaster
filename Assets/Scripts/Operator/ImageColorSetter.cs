@@ -7,7 +7,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/ImageColorSetter")]
+        [AddComponentMenu("|Operator/ImageColorSetter")]
         public class ImageColorSetter : MonoBehaviour
         {
 #if UNITY_EDITOR

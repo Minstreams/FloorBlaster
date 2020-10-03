@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/ThreadholdFloatLinker")]
+        [AddComponentMenu("|Linker/ThreadholdFloatLinker")]
         public class ThreadholdFloatLinker : MonoBehaviour
         {
             [MinsHeader("Threadhold Float Linker", SummaryType.TitleCyan, 0)]

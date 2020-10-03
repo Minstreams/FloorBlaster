@@ -26,7 +26,7 @@ public class ConditionalShowDrawer : PropertyDrawer
         if (IsConditionMet(property))
         {
             //条件满足，开始绘制
-            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
+            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, string.IsNullOrEmpty(condSAtt.Label) ? label : new GUIContent(condSAtt.Label));
             else
             {
                 LabelDrawer.DrawLabel(position, property, condSAtt.Label);
@@ -36,7 +36,7 @@ public class ConditionalShowDrawer : PropertyDrawer
         {
             var tc = GUI.color;
             GUI.color = Color.gray;
-            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, label);
+            if (property.type.EndsWith("Event")) UEDrawer.OnGUI(position, property, string.IsNullOrEmpty(condSAtt.Label) ? label : new GUIContent(condSAtt.Label));
             else
             {
                 LabelDrawer.DrawLabel(position, property, condSAtt.Label);

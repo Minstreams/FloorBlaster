@@ -7,7 +7,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/DontDestroyOnloader")]
+        [AddComponentMenu("|Operator/DontDestroyOnloader")]
         public class DontDestroyOnloader : MonoBehaviour
         {
 #if UNITY_EDITOR

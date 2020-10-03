@@ -7,7 +7,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/Bezier")]
+        [AddComponentMenu("|Operator/Bezier")]
         public class Bezier : MonoBehaviour
         {
             [MinsHeader("Bezier", SummaryType.TitleYellow, 0)]

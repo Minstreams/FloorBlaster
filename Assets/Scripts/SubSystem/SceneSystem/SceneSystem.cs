@@ -1,4 +1,5 @@
-﻿using System.Collections;using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using GameSystem.Setting;
 using UnityEngine.SceneManagement;
@@ -131,6 +132,11 @@ namespace GameSystem
         public static void LoadScene(string sceneName)
         {
             SceneManager.LoadScene(sceneName);
+        }
+
+        public static void LoadScene(TheMatrix.GameScene gameScene)
+        {
+            SceneManager.LoadScene(TheMatrix.GetScene(gameScene));
         }
 
         //[RuntimeInitializeOnLoadMethod]

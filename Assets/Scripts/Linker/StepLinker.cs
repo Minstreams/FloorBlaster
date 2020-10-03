@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/StepLinker")]
+        [AddComponentMenu("|Linker/StepLinker")]
         public class StepLinker : MonoBehaviour
         {
             [MinsHeader("Step Linker", SummaryType.TitleCyan, 0)]

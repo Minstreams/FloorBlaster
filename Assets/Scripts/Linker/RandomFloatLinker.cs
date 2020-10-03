@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/RandomFloatLinker")]
+        [AddComponentMenu("|Linker/RandomFloatLinker")]
         public class RandomFloatLinker : MonoBehaviour
         {
             [MinsHeader("Random Float Linker", SummaryType.TitleCyan, 0)]

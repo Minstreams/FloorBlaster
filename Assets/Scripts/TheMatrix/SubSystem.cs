@@ -44,14 +44,5 @@ namespace GameSystem
         {
             TheMatrix.StopCoroutine(node);
         }
-        /// <summary>
-        /// 进入指定状态
-        /// （这是对只有简单状态机的系统简化的API）
-        /// </summary>
-        public static void EnterState(IEnumerator routine)
-        {
-            StopAllCoroutines();
-            StartCoroutine(routine);
-        }
     }
 }

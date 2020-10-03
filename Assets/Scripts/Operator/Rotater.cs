@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/Rotater")]
+        [AddComponentMenu("|Operator/Rotater")]
         public class Rotater : MonoBehaviour
         {
 #if UNITY_EDITOR

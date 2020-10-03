@@ -7,7 +7,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/SpeakerLinker")]
+        [AddComponentMenu("|Linker/SpeakerLinker")]
         public class SpeakerLinker : MonoBehaviour
         {
 #if UNITY_EDITOR

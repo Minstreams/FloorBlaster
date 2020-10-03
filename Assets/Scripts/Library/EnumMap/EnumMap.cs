@@ -12,6 +12,7 @@ using UnityEngine;
 [System.Serializable]
 public class EnumMap<ET, DT> where ET : System.Enum
 {
+    [SerializeField]
     public List<DT> list = new List<DT>(System.Enum.GetNames(typeof(ET)).Length);
 
     public DT this[ET key]

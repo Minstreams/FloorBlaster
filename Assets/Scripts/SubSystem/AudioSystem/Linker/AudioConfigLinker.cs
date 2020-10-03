@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/AudioSystem/AudioConfigLinker")]
+        [AddComponentMenu("[AudioSystem]/Linker/AudioConfigLinker")]
         public class AudioConfigLinker : MonoBehaviour
         {
 #if UNITY_EDITOR

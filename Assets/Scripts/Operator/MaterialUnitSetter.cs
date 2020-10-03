@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/MaterialUnitSetter")]
+        [AddComponentMenu("|Operator/MaterialUnitSetter")]
         public class MaterialUnitSetter : MonoBehaviour
         {
 #if UNITY_EDITOR

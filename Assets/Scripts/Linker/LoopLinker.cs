@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/LoopLinker")]
+        [AddComponentMenu("|Linker/LoopLinker")]
         public class LoopLinker : MonoBehaviour
         {
             //Private Here

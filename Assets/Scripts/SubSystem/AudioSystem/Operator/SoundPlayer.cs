@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/AudioSystem/SoundPlayer")]
+        [AddComponentMenu("[AudioSystem]/Operator/SoundPlayer")]
         public class SoundPlayer : Linker.AudioConfigLinker
         {
 #if UNITY_EDITOR

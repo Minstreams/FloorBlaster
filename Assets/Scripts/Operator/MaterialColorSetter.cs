@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/MaterialColorSetter")]
+        [AddComponentMenu("|Operator/MaterialColorSetter")]
         public class MaterialColorSetter : MonoBehaviour
         {
 #if UNITY_EDITOR

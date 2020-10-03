@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/LerpVec3Linker")]
+        [AddComponentMenu("|Linker/LerpVec3Linker")]
         public class LerpVec3Linker : MonoBehaviour
         {
             [MinsHeader("Lerp Vec3 Linker", SummaryType.TitleCyan, 0)]

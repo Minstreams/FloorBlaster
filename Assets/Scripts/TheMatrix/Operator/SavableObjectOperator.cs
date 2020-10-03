@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/TheMatrix/SavableObjectOperator")]
+        [AddComponentMenu("[TheMatrix]/Operator/SavableObjectOperator")]
         public class SavableObjectOperator : MonoBehaviour
         {
 #if UNITY_EDITOR

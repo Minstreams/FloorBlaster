@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/SimpleColorLinker")]
+        [AddComponentMenu("|Linker/SimpleColorLinker")]
         public class SimpleColorLinker : MonoBehaviour
         {
             [MinsHeader("Simple Color Linker", SummaryType.TitleCyan, 0)]

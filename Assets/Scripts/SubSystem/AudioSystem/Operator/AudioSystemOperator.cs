@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Operator
     {
-        [AddComponentMenu("Operator/AudioSystem/AudioSystemOperator")]
+        [AddComponentMenu("[AudioSystem]/Operator/AudioSystemOperator")]
         public class AudioSystemOperator : MonoBehaviour
         {
 #if UNITY_EDITOR

@@ -6,7 +6,7 @@ namespace GameSystem
 {
     namespace Linker
     {
-        [AddComponentMenu("Linker/DelayLinker")]
+        [AddComponentMenu("|Linker/DelayLinker")]
         public class DelayLinker : MonoBehaviour
         {
             [MinsHeader("Delay Linker", SummaryType.TitleCyan, 0)]
