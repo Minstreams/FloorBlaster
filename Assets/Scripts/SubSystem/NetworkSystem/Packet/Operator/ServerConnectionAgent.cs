@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GameSystem.Networking;
 
 namespace GameSystem
 {
@@ -28,12 +29,12 @@ namespace GameSystem
             public StringEvent output;
 
 
-            private NetworkSystem.Server.Connection connection;
-            public void Init(NetworkSystem.Server.Connection connection)
+            private Server.Connection connection;
+            public void Init(Server.Connection connection)
             {
                 this.connection = connection;
                 connection.onReceive += msg => output?.Invoke(msg);
-                NetworkSystem.server.onUDPReceive += msg => output?.Invoke(msg);
+                NetworkSystem.server.onUDPReceive += msg => output?.Invoke(msg.message);
             }
 
             //Input

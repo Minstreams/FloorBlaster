@@ -16,3 +16,5 @@ MonoBehaviour:
   serverUDPPort: 7856
   serverIP: 172.18.24.46
   localIP: 172.18.24.46
+  udpBoardcastInterval: 50
+  udpBoardcastRefreshInterval: 5000

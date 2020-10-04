@@ -29,12 +29,13 @@ namespace GameSystem
             public StringEvent output;
 
 
-            private NetworkSystem.Client connection;
-            public void Init(NetworkSystem.Client connection)
+            private Networking.Client connection;
+            [ContextMenu("Init")]
+            public void Init()
             {
-                this.connection = connection;
-                connection.onReceive += msg => output?.Invoke(msg);
-                connection.onUDPReceive += msg => output?.Invoke(msg);
+                connection = NetworkSystem.client;
+                NetworkSystem.OnReceive += msg => output?.Invoke(msg);
+                NetworkSystem.OnUDPReceive += packet => output?.Invoke(packet.message);
             }
 
             //Input
@@ -51,11 +52,6 @@ namespace GameSystem
                     return;
                 }
                 connection.Send(message);
-            }
-            [ContextMenu("UDPSend")]
-            public void UDPSend()
-            {
-                connection.UDPSend(message);
             }
         }
     }

@@ -47,11 +47,15 @@ namespace GameSystem
         }
         public static void Log(string message)
         {
-            Debug.Log("[" + typeof(SubSetting).ToString() + "]" + message);
+            if (TheMatrix.debug) Debug.Log("[" + typeof(SubSetting).ToString() + "]" + message);
         }
         public static void LogError(string message)
         {
             Debug.LogError("[" + typeof(SubSetting).ToString() + "]" + message);
+        }
+        public static void LogError(Exception ex)
+        {
+            Debug.LogError("[Server Exception]" + ex.GetType().Name + ":" + ex.Message + "\n" + ex.StackTrace);
         }
         public static void LogAssertion(string message)
         {

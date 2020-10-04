@@ -56,7 +56,6 @@ public class GameEditorExtension : EditorWindow
         foreach (string sceneName in TheMatrix.Setting.gameSceneMap.list)
         {
             var a = TheMatrix.Setting;
-            Debug.Log(a.gameSceneMap.list.Count);
             EditorSceneManager.OpenScene("Assets/Scenes/" + sceneName + ".unity", OpenSceneMode.AdditiveWithoutLoading);
         }
         EditorApplication.isPlaying = true;

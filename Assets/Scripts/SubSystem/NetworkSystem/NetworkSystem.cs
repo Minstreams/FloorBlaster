@@ -2,560 +2,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using GameSystem.Setting;
-using System;
+using GameSystem.Networking;
 using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.Text;
-using System.Net.NetworkInformation;
 
 namespace GameSystem
 {
+
     /// <summary>
     /// 网络系统。用于多人联机和服务器服务。
     /// </summary>
     public class NetworkSystem : SubSystem<NetworkSystemSetting>
     {
-        private const int maxMsgLength = 2048;
+        public const int maxMsgLength = 2048;
+        public const string clientHello = "Hellov0.0.1";
+        public const string serverHi = "Hi~";
+        public static bool isHost { get; private set; }
 
-
-        private static string ServerIP { get { return Setting.serverIP; } }
-        private static string LocalIP { get { return Setting.localIP; } }
-
-        public static bool isServer { get; private set; }
-
-        /// <summary>
-        /// Server of NetworkSystem
-        /// </summary>
-        public class Server
-        {
-            // API ------------------------------------------
-            public void Destroy()
-            {
-                if (isDestroyed)
-                {
-                    Log("Destroy Again.");
-                    return;
-                }
-                isDestroyed = true;
-                Log("Destroy");
-                TheMatrix.StopAllCoroutines(typeof(Server));
-
-                udpReceiveThread?.Abort();
-                udpClient.Close();
-
-                listenThread?.Abort();
-                connections?.ForEach(conn => { conn.Destroy(); });
-                connections?.Clear();
-                listener?.Stop();
-            }
-            public void Boardcast(string message)
-            {
-                connections.ForEach(conn => { conn.Send(message); });
-            }
-            public void CloseConnection(Connection conn)
-            {
-                pendingCloseQueue.Enqueue(conn);
-            }
-            public void UDPSend(string message, IPEndPoint remote)
-            {
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                udpClient.Send(messageBytes, messageBytes.Length, remote);
-            }
-            public void UDPBoardcast(string message)
-            {
-                connections.ForEach(conn => { UDPSend(message, conn.RemoteEndPoint); });
-            }
-
-            // Inner Code -----------------------------------
-            private bool isDestroyed = false;
-
-            public Server()
-            {
-                TheMatrix.StartCoroutine(ConnectionThread(), typeof(Server));
-                listener = new TcpListener(new IPEndPoint(IPAddress.Parse(ServerIP), Setting.serverTCPPort));
-                listenThread = new Thread(ListenThread);
-                listenThread.Start();
-
-                udpClient = new UdpClient(Setting.serverUDPPort);
-                udpReceiveThread = new Thread(UDPReceiveThread);
-                udpReceiveThread.Start();
-
-                Log("服务端已启用……");
-            }
-            ~Server()
-            {
-                Log("~Server");
-                Destroy();
-            }
-
-            // UDP-------------------------------------------
-            private UdpClient udpClient;
-            private Thread udpReceiveThread;
-
-            public event Action<string> onUDPReceive;
-            private void UDPReceiveThread()
-            {
-                Log("开始收UDP包……");
-                while (true)
-                {
-                    try
-                    {
-                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, Setting.serverUDPPort);
-                        byte[] buffer = udpClient.Receive(ref remoteIP);
-                        string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-                        Log($"UDPReceive{remoteIP}:{receiveString}");
-                        onUDPReceive?.Invoke(receiveString);
-                    }
-                    catch (SocketException ex)
-                    {
-                        Log(ex.Message + "\n" + ex.StackTrace);
-                        continue;
-                    }
-                    catch (ThreadAbortException)
-                    {
-                        Log("UDPReceive Thread Aborted.");
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log(ex.Message + "\n" + ex.StackTrace);
-                        ShutdownServer();
-                        return;
-                    }
-                }
-            }
-
-
-
-            // TCP ------------------------------------------
-            private TcpListener listener;
-            private Thread listenThread;
-            private List<Connection> connections = new List<Connection>();
-            private void ListenThread()
-            {
-                try
-                {
-                    listener.Start();
-                    while (true)
-                    {
-                        Log("Listening……");
-                        CallConnect(listener.AcceptTcpClient());
-                        // Block --------------------------------
-                    }
-                }
-                catch (ThreadAbortException)
-                {
-                    Log("Listen Thread Aborted");
-                }
-                catch (Exception ex)
-                {
-                    Log(ex.Message + "\n" + ex.StackTrace);
-                    ShutdownServer();
-                }
-            }
-            private Queue<TcpClient> pendingConnectionQueue = new Queue<TcpClient>();
-            private Queue<Connection> pendingCloseQueue = new Queue<Connection>();
-            private void CallConnect(TcpClient client)
-            {
-                pendingConnectionQueue.Enqueue(client);
-            }
-            private IEnumerator ConnectionThread()
-            {
-                while (true)
-                {
-                    yield return 0;
-                    while (pendingConnectionQueue.Count > 0) connections.Add(new Connection(pendingConnectionQueue.Dequeue(), this));
-                    while (pendingCloseQueue.Count > 0)
-                    {
-                        var conn = pendingCloseQueue.Dequeue();
-                        conn.Destroy();
-                        connections.Remove(conn);
-                    }
-                }
-            }
-
-
-            private static void Log(object msg)
-            {
-                string msgStr = "[Server]" + msg.ToString();
-                Console.WriteLine(msgStr);
-                CallLog(msgStr);
-            }
-            /// <summary>
-            /// 在服务器上运行的玩家连接
-            /// </summary>
-            public class Connection
-            {
-                // API ------------------------------------------
-                public IPEndPoint RemoteEndPoint { get { return (IPEndPoint)client.Client.RemoteEndPoint; } }
-                public IPEndPoint UDPEndPoint { get { return new IPEndPoint(RemoteEndPoint.Address, RemoteEndPoint.Port - 1); } }
-                public void Destroy()
-                {
-                    if (isDestroyed)
-                    {
-                        Log("Destroy Again.");
-                        return;
-                    }
-                    isDestroyed = true;
-
-                    Log("Destroy");
-                    TheMatrix.StopCoroutine(receiveEventCoroutine);
-                    MonoBehaviour.Destroy(agent);
-                    receiveThread?.Abort();
-                    stream?.Close();
-                    client?.Close();
-                }
-                public void Send(string message)
-                {
-                    byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                    stream.Write(messageBytes, 0, messageBytes.Length);
-                }
-
-
-                // Inner Code -----------------------------------
-                private bool isDestroyed = false;
-                private Server server;
-                private TcpClient client;
-                private NetworkStream stream;
-                private Operator.ServerConnectionAgent agent;
-                private Thread receiveThread;
-                private byte[] buffer = new byte[maxMsgLength];
-
-                public event Action<string> onReceive;
-
-                public Connection(TcpClient client, Server server)
-                {
-                    receiveEventCoroutine = TheMatrix.StartCoroutine(ReceiveEventThread(), typeof(Connection));
-                    this.server = server;
-                    this.client = client;
-                    stream = client.GetStream();
-                    receiveThread = new Thread(ReceiveThread);
-                    receiveThread.Start();
-                    agent = TheMatrix.Instance.gameObject.AddComponent<Operator.ServerConnectionAgent>();
-                    agent.Init(this);
-
-                    Log("已连接。");
-                }
-                ~Connection()
-                {
-                    Log("~Connection");
-                    Destroy();
-                }
-                private void ReceiveThread()
-                {
-                    string receiveString;
-
-                    int count;
-                    try
-                    {
-                        while (true)
-                        {
-                            count = stream.Read(buffer, 0, buffer.Length);
-                            // Block --------------------------------
-                            if (count <= 0)
-                            {
-                                Log("与客户端断开连接");
-                                server.CloseConnection(this);
-                                return;
-                            }
-                            receiveString = Encoding.UTF8.GetString(buffer, 0, count);
-                            Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                            CallReceiveEvent(receiveString);
-                        }
-                    }
-                    catch (ThreadAbortException)
-                    {
-                        Log("Receive Thread Aborted.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log(ex.Message + "\n" + ex.StackTrace);
-                        server.CloseConnection(this);
-                    }
-                }
-
-                private LinkedListNode<Coroutine> receiveEventCoroutine;
-                private Queue<string> pendingReceiveQueue = new Queue<string>();
-                private void CallReceiveEvent(string message)
-                {
-                    pendingReceiveQueue.Enqueue(message);
-                }
-                private IEnumerator ReceiveEventThread()
-                {
-                    while (true)
-                    {
-                        yield return 0;
-                        while (pendingReceiveQueue.Count > 0) onReceive?.Invoke(pendingReceiveQueue.Dequeue());
-                    }
-                }
-            }
-        }
-        /// <summary>
-        /// Client and Connection of NetworkSystem
-        /// </summary>
-        public class Client
-        {
-            // API ------------------------------------------
-            public void Destroy()
-            {
-                if (isDestroyed)
-                {
-                    Log("Destroy Again.");
-                    return;
-                }
-                isDestroyed = true;
-
-                TheMatrix.StopAllCoroutines(typeof(Client));
-                Log("Destroy");
-
-                udpReceiveThread?.Abort();
-                udpClient.Close();
-
-                connectThread?.Abort();
-                receiveThread?.Abort();
-                MonoBehaviour.Destroy(agent);
-                stream?.Close();
-                client?.Close();
-            }
-            public void Send(string message)
-            {
-                if (stream == null || !stream.CanWrite)
-                {
-                    Log("Sending failed.");
-                }
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                stream.Write(messageBytes, 0, messageBytes.Length);
-            }
-            public void UDPSend(string message, IPEndPoint remote)
-            {
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                udpClient.Send(messageBytes, messageBytes.Length, remote);
-            }
-            public void UDPSend(string message)
-            {
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-                udpClient.Send(messageBytes, messageBytes.Length, new IPEndPoint(IPAddress.Parse(ServerIP), Setting.serverUDPPort));
-            }
-
-
-            // Inner Code -----------------------------------
-            private bool isDestroyed = false;
-
-            public Client()
-            {
-                TheMatrix.StartCoroutine(ReceiveEventThread(), typeof(Client));
-                try
-                {
-                    client = new TcpClient(new IPEndPoint(IPAddress.Parse(LocalIP), port));
-                    Log("客户端已启用……");
-                    connectThread = new Thread(ConnectThread);
-                    connectThread.Start();
-                    agent = TheMatrix.Instance.gameObject.AddComponent<Operator.ClientConnectionAgent>();
-                    agent.Init(this);
-
-                    udpClient = new UdpClient(port - 1);
-                    udpReceiveThread = new Thread(UDPReceiveThread);
-                    udpReceiveThread.Start();
-                }
-                catch (Exception ex)
-                {
-                    Log(ex.Message + "\n" + ex.StackTrace);
-                    ShutdownClient();
-                    return;
-                }
-            }
-            ~Client()
-            {
-                Log("~Client");
-                Destroy();
-            }
-
-            // UDP-------------------------------------------
-            private UdpClient udpClient;
-            private Thread udpReceiveThread;
-
-            public event Action<string> onUDPReceive;
-            private void UDPReceiveThread()
-            {
-                Log("开始收UDP包……");
-                try
-                {
-                    while (true)
-                    {
-                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, port - 1);
-                        byte[] buffer = udpClient.Receive(ref remoteIP);
-                        string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-                        Log($"UDPReceive{remoteIP}:{receiveString}");
-                        onUDPReceive?.Invoke(receiveString);
-                    }
-                }
-                catch (ThreadAbortException)
-                {
-                    Log("UDPReceive Thread Aborted.");
-                }
-                catch (Exception ex)
-                {
-                    Log(ex.Message + "\n" + ex.StackTrace);
-                    ShutdownClient();
-                }
-            }
-
-
-            // TCP ------------------------------------------
-            private const int port = 12860;
-
-            private TcpClient client;
-            private Thread connectThread;
-            private NetworkStream stream;
-            private Operator.ClientConnectionAgent agent;
-            private Thread receiveThread;
-            private byte[] buffer = new byte[maxMsgLength];
-
-            public event Action<string> onReceive;
-            private void ConnectThread()
-            {
-                do
-                {
-                    Log("Connecting……");
-                    try
-                    {
-                        client.Connect(new IPEndPoint(IPAddress.Parse(ServerIP), Setting.serverTCPPort));
-                        // Block --------------------------------
-                    }
-                    catch (SocketException ex)
-                    {
-                        Log(ex.Message + "\n" + ex.StackTrace);
-                        Log("连接失败！重新连接中……");
-                        Thread.Sleep(1000);
-                        continue;
-                    }
-                    catch (ThreadAbortException)
-                    {
-                        Log("Connect Thread Aborted.");
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log(ex.Message + "\n" + ex.StackTrace);
-                        ShutdownClient();
-                        return;
-                    }
-                } while (!client.Connected);
-
-                Log("已连接……");
-                stream = client.GetStream();
-                receiveThread = new Thread(ReceiveThread);
-                receiveThread.Start();
-            }
-
-            private void ReceiveThread()
-            {
-                string receiveString;
-
-                int count;
-                try
-                {
-                    while (true)
-                    {
-                        count = stream.Read(buffer, 0, buffer.Length);
-                        // Block --------------------------------
-                        if (count <= 0)
-                        {
-                            Log("与服务器断开连接");
-                            ShutdownClient();
-                            return;
-                        }
-                        receiveString = Encoding.UTF8.GetString(buffer, 0, count);
-                        Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                        CallReceiveEvent(receiveString);
-                    }
-                }
-                catch (ThreadAbortException)
-                {
-                    Log("Receive Thread Aborted.");
-                }
-                catch (Exception ex)
-                {
-                    Log(ex.Message + "\n" + ex.StackTrace);
-                    ShutdownClient();
-                }
-            }
-
-            private Queue<string> pendingReceiveQueue = new Queue<string>();
-            private void CallReceiveEvent(string message)
-            {
-                pendingReceiveQueue.Enqueue(message);
-            }
-            private IEnumerator ReceiveEventThread()
-            {
-                while (true)
-                {
-                    yield return 0;
-                    while (pendingReceiveQueue.Count > 0) onReceive?.Invoke(pendingReceiveQueue.Dequeue());
-                }
-            }
-
-            private static void Log(object msg)
-            {
-                string msgStr = "[Client]" + msg.ToString();
-                Console.WriteLine(msgStr);
-                CallLog(msgStr);
-            }
-
-        }
-
-        public static Server server = null;
-        public static Client client = null;
-
-        public void PingTest()
-        {
-            UnityEngine.Ping pinger = new UnityEngine.Ping("127.0.0.1");
-        }
-
-        public static void LaunchServer()
-        {
-            isServer = true;
-            if (server != null)
-            {
-                Dialog("服务器已经存在！");
-                return;
-            }
-            Log("Launch Server");
-            server = new Server();
-        }
-        public static void LaunchClient()
-        {
-            if (client != null)
-            {
-                Dialog("客户端已经存在！");
-                return;
-            }
-            Log("Launch Client");
-            client = new Client();
-        }
-        public static void ShutdownServer()
-        {
-            isServer = false;
-            pendingShutdownServer = true;
-        }
-        public static void ShutdownClient()
-        {
-            pendingShutdownClient = true;
-        }
 
 
         /// <summary>
         /// Call Debug.Log in Main Thread
         /// </summary>
         /// <param name="message"></param>
-        public static void CallLog(string message)
-        {
-            pendingLogQueue.Enqueue(message);
-        }
         private static Queue<string> pendingLogQueue = new Queue<string>();
         private static bool pendingShutdownServer = false;
         private static bool pendingShutdownClient = false;
+        private static Queue<UDPPacket> pendingUDPReceiveQueue = new Queue<UDPPacket>();
+        private static Queue<string> pendingReceiveQueue = new Queue<string>();
+        private static bool pendingConnected = false;
+        private static bool pendingDisconnected = false;
+        private static Dictionary<string, System.Action<PacketBase>> tcpDistributors = new Dictionary<string, System.Action<PacketBase>>();
+        private static Dictionary<string, System.Action<PacketBase>> tcpProcessors = new Dictionary<string, System.Action<PacketBase>>();
         private static IEnumerator MainThread()
         {
             while (true)
@@ -576,6 +53,235 @@ namespace GameSystem
                     client?.Destroy();
                     client = null;
                 }
+                while (pendingUDPReceiveQueue.Count > 0) OnUDPReceive?.Invoke(pendingUDPReceiveQueue.Dequeue());
+                while (pendingReceiveQueue.Count > 0)
+                {
+                    string msg = pendingReceiveQueue.Dequeue();
+                    OnReceive?.Invoke(msg);
+                    var pkt = StringToPacket(msg);
+                    if (tcpDistributors.ContainsKey(pkt.pktTypeStr))
+                    {
+                        tcpDistributors[pkt.pktTypeStr]?.Invoke(pkt);
+                    }
+                }
+                if (pendingConnected) { pendingConnected = false; OnConnected?.Invoke(); }
+                if (pendingDisconnected) { pendingDisconnected = false; OnDisconnected?.Invoke(); }
+            }
+        }
+
+
+
+        // API ---------------------------------
+        public static Server server = null;
+        public static Client client = null;
+        public static string LocalIP
+        {
+            get
+            {
+                return Setting.localIP;
+            }
+        }
+
+        private static string serverIP = "";
+        public static string ServerIP
+        {
+            get => serverIP;
+            set
+            {
+                serverIP = value;
+                serverEndPoint.Address = IPAddress.Parse(value);
+            }
+        }
+
+        private static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, Setting.serverTCPPort);
+        public static IPEndPoint ServerIPEndPoint
+        {
+            get => serverEndPoint;
+            set
+            {
+                serverEndPoint.Address = value.Address;
+                serverIP = value.Address.ToString();
+            }
+        }
+        public static void LaunchServer()
+        {
+            isHost = true;
+            if (server != null)
+            {
+                Dialog("服务器已经存在！");
+                return;
+            }
+            Log("Launch Server");
+            server = new Server();
+        }
+        public static void LaunchClient()
+        {
+            if (client != null)
+            {
+                Dialog("客户端已经存在！");
+                return;
+            }
+            Log("Launch Client");
+            client = new Client();
+        }
+        public static void ShutdownServer()
+        {
+            isHost = false;
+            pendingShutdownServer = true;
+        }
+        public static void ShutdownClient()
+        {
+            pendingShutdownClient = true;
+        }
+        /// <summary>
+        /// 获取两个可用端口分配给客户端
+        /// 返回tcp端口
+        /// udp端口 = tcp端口-1
+        /// </summary>
+        public static int GetValidPort()
+        {
+            //todo
+            return Random.Range(Setting.minClientPort, Setting.maxClientPort) + 1;
+        }
+        /// <summary>
+        /// 获取所有可能的服务器IP
+        /// </summary>
+        public static string[] GetPossibleIPs()
+        {
+            return new string[] { Setting.serverIP };
+        }
+
+        public static PacketBase StringToPacket(string str)
+        {
+            try
+            {
+                PacketBase temp = JsonUtility.FromJson(str, typeof(PacketBase)) as PacketBase;
+                return JsonUtility.FromJson(str, temp.pktType) as PacketBase;
+            }
+            catch (System.Exception ex)
+            {
+                LogError(ex);
+                LogError("sting:" + str);
+            }
+            return null;
+        }
+        public static string PacketToString(PacketBase pkt)
+        {
+            return JsonUtility.ToJson(pkt);
+        }
+        public static void ListenForPacket(string typeStr, System.Action<PacketBase> listener)
+        {
+            if (!tcpDistributors.ContainsKey(typeStr)) tcpDistributors.Add(typeStr, null);
+            tcpDistributors[typeStr] += listener;
+        }
+        public static System.Action<PacketBase> ListenForPacket<pktType>(System.Action<pktType> listener) where pktType : PacketBase
+        {
+            string typeStr = typeof(pktType).FullName;
+            if (!tcpDistributors.ContainsKey(typeStr)) tcpDistributors.Add(typeStr, null);
+            System.Action<PacketBase> output = pkt => listener.Invoke(pkt as pktType);
+            tcpDistributors[typeStr] += output;
+            return output;
+        }
+        public static void StopListenForPacket(string typeStr, System.Action<PacketBase> listener)
+        {
+            if (tcpDistributors.ContainsKey(typeStr))
+            {
+                tcpDistributors[typeStr] -= listener;
+            }
+        }
+        /// <summary>
+        /// 结束监听，必须输入开始监听时获取的Action对象
+        /// </summary>
+        public static void StopListenForPacket<pktType>(System.Action<PacketBase> listener) where pktType : PacketBase
+        {
+            string typeStr = typeof(pktType).FullName;
+            if (tcpDistributors.ContainsKey(typeStr))
+            {
+                tcpDistributors[typeStr] -= pkt => listener.Invoke(pkt as pktType);
+            }
+        }
+        /// <summary>
+        /// 客户端注册Process事件
+        /// </summary>
+        public static void ProcessPacket(string typeStr, System.Action<PacketBase> processor)
+        {
+            if (!tcpProcessors.ContainsKey(typeStr)) tcpProcessors.Add(typeStr, null);
+            tcpProcessors[typeStr] += processor;
+        }
+        /// <summary>
+        /// 客户端注册Process事件
+        /// </summary>
+        public static System.Action<PacketBase> ProcessPacket<pktType>(System.Action<pktType> processor) where pktType : PacketBase
+        {
+            string typeStr = typeof(pktType).FullName;
+            if (!tcpProcessors.ContainsKey(typeStr)) tcpProcessors.Add(typeStr, null);
+            System.Action<PacketBase> output = pkt => processor.Invoke(pkt as pktType);
+            tcpProcessors[typeStr] += output;
+            return output;
+        }
+        public static void StopProcessPacket(string typeStr, System.Action<PacketBase> processor)
+        {
+            if (tcpProcessors.ContainsKey(typeStr))
+            {
+                tcpProcessors[typeStr] -= processor;
+            }
+        }
+        /// <summary>
+        /// 结束服务器处理，必须输入开始服务器处理时获取的Action对象
+        /// </summary>
+        public static void StopProcessPacket<pktType>(System.Action<PacketBase> processor) where pktType : PacketBase
+        {
+            string typeStr = typeof(pktType).FullName;
+            if (tcpProcessors.ContainsKey(typeStr))
+            {
+                tcpProcessors[typeStr] -= processor;
+            }
+        }
+        /// <summary>
+        /// 给服务器送Packet
+        /// </summary>
+        public static void SendPacket(PacketBase pkt)
+        {
+            client?.Send(PacketToString(pkt));
+        }
+        public static void ServerBoardcastPacket(PacketBase pkt)
+        {
+            server?.Boardcast(PacketToString(pkt));
+        }
+
+        // Events ------------------------------
+        public static event System.Action<UDPPacket> OnUDPReceive;
+        public static event System.Action<string> OnReceive;
+        public static event System.Action OnConnected;
+        public static event System.Action OnDisconnected;
+
+        // For Servers & Client ----------------
+        public static void CallLog(string message)
+        {
+            pendingLogQueue.Enqueue(message);
+        }
+        public static void InvokeUDPReceive(UDPPacket packet)
+        {
+            pendingUDPReceiveQueue.Enqueue(packet);
+        }
+        public static void InvokeReceive(string message)
+        {
+            pendingReceiveQueue.Enqueue(message);
+        }
+        public static void InvokeConnected()
+        {
+            pendingConnected = true;
+        }
+        public static void InvokeDisconnected()
+        {
+            pendingDisconnected = true;
+        }
+        public static void CallProcessPacket(string pktMessage)
+        {
+            PacketBase pkt = StringToPacket(pktMessage);
+            if (tcpProcessors.ContainsKey(pkt.pktTypeStr))
+            {
+                tcpProcessors[pkt.pktTypeStr]?.Invoke(pkt);
             }
         }
 
@@ -583,23 +289,26 @@ namespace GameSystem
         [RuntimeInitializeOnLoadMethod]
         private static void RuntimeInit()
         {
-            isServer = false;
+            isHost = false;
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
             TheMatrix.onGameStart += OnGameStart;
+            Application.quitting += OnGameQuitting;
+            //随便找个Setting里的值，用于在分线程前提前初始化Setting
+            int active = Setting.serverTCPPort;
         }
         private static void OnGameAwake()
         {
             StartCoroutine(MainThread());
-            //在进入游戏第一个场景时调用
         }
         private static void OnGameStart()
         {
             //在主场景游戏开始时和游戏重新开始时调用
         }
-
-
-        //API---------------------------------
-        //public static void SomeFunction(){}
+        private static void OnGameQuitting()
+        {
+            ShutdownClient();
+            ShutdownServer();
+        }
     }
 }

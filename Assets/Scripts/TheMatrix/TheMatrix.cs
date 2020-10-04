@@ -23,7 +23,10 @@ namespace GameSystem
         public enum GameScene
         {
             logo,
-            startScene,
+            startMenu,
+            lobby,
+            room,
+            inGame,
         }
 
         // 游戏流程 ---------------------------------
@@ -51,6 +54,7 @@ namespace GameSystem
         private IEnumerator _Logo()
         {
             SceneSystem.LoadScene(GameScene.logo);
+            yield return 0;
 
             //在进入每个状态前重置控制信息
             ResetGameMessage();
@@ -62,13 +66,68 @@ namespace GameSystem
             }
 
             //不直接用嵌套，防止嵌套层数过深（是否有自动优化？没查到）
-            StartCoroutine(_Start());
+            StartCoroutine(_StartMenu());
+        }
+
+
+        // 开始菜单
+        private IEnumerator _StartMenu()
+        {
+            SceneSystem.LoadScene(GameScene.startMenu);
+            yield return 0;
+
+            ResetGameMessage();
+            while (true)
+            {
+                yield return 0;
+                if (GetGameMessage(GameMessage.Next)) break;
+            }
+
+            StartCoroutine(_Lobby());
+        }
+
+        // 联机大厅
+        private IEnumerator _Lobby()
+        {
+            SceneSystem.LoadScene(GameScene.lobby);
+            yield return 0;
+
+            NetworkSystem.LaunchClient();
+            NetworkSystem.client.StartUDPBoardcast();
+
+            ResetGameMessage();
+            while (true)
+            {
+                yield return 0;
+                if (GetGameMessage(GameMessage.Return))
+                {
+                    // 回到开始菜单
+                    StartCoroutine(_StartMenu());
+                    break;
+                }
+                if (GetGameMessage(GameMessage.Next))
+                {
+                    StartCoroutine(_Room());
+                    break;
+                }
+            }
+
+            NetworkSystem.client.StopUDPBoardcast();
+        }
+
+        private IEnumerator _Room()
+        {
+            SceneSystem.LoadScene(GameScene.room);
+            yield return 0;
+
+            NetworkSystem.client.StartTCPConnecting();
+
         }
 
         // 游戏开始
         private IEnumerator _Start()
         {
-            SceneSystem.LoadScene(GameScene.startScene);
+            //SceneSystem.LoadScene(GameScene.startScene);
             InputSystem.ChangeState(new InputSystem.MoveState());
 
             onGameStart?.Invoke();
@@ -133,8 +192,9 @@ namespace GameSystem
         [Label("是否测试文件保存", true)]
         public bool saveData = false;
         [Label]
-        public bool debug = false;
+        public bool _debug = false;
 #endif
+        public static bool debug { get; private set; }
         #endregion
 
         #region 游戏控制 ====================================
@@ -177,10 +237,8 @@ namespace GameSystem
         }
         public static void Debug(string msg)
         {
-#if UNITY_EDITOR
-            if (!Instance.debug) return;
+            if (!debug) return;
             UnityEngine.Debug.Log("【TheMatrix Debug】" + msg);
-#endif
         }
         public static void Error(string msg)
         {
@@ -314,6 +372,7 @@ namespace GameSystem
         {
             DontDestroyOnLoad(gameObject);
 #if UNITY_EDITOR
+            debug = _debug;
             if (testAll)
 #endif
                 StartCoroutine(_Awake());
