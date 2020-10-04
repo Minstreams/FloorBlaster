@@ -79,7 +79,7 @@ public class GameEditorExtension : EditorWindow
         if (!name.EndsWith("System")) name += "System";
         if (AssetDatabase.IsValidFolder("Assets/Scripts/SubSystem/" + name))
         {
-            Debug.LogAssertion(name + " already Exists!");
+            EditorUtility.DisplayDialog("Minstreams工具箱", name + " already Exists!", "Oh~");
             return;
         }
         AssetDatabase.CreateFolder("Assets/Scripts/SubSystem", name);

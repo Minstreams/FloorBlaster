@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -43,6 +44,29 @@ namespace GameSystem
         public static void StopCoroutine(LinkedListNode<Coroutine> node)
         {
             TheMatrix.StopCoroutine(node);
+        }
+        public static void Log(string message)
+        {
+            Debug.Log("[" + typeof(SubSetting).ToString() + "]" + message);
+        }
+        public static void LogError(string message)
+        {
+            Debug.LogError("[" + typeof(SubSetting).ToString() + "]" + message);
+        }
+        public static void LogAssertion(string message)
+        {
+            Debug.LogAssertion("[" + typeof(SubSetting).ToString() + "]" + message);
+        }
+        public static void LogWarning(string message)
+        {
+            Debug.LogWarning("[" + typeof(SubSetting).ToString() + "]" + message);
+        }
+        public static void Dialog(string msg, string ok = "OK")
+        {
+#if UNITY_EDITOR
+            Log("Dialog:" + msg);
+            UnityEditor.EditorUtility.DisplayDialog(typeof(SubSetting).ToString(), msg, ok);
+#endif
         }
     }
 }

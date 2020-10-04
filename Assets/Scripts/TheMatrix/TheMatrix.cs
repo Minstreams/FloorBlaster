@@ -73,6 +73,17 @@ namespace GameSystem
 
             onGameStart?.Invoke();
             yield return 0;
+
+            ResetGameMessage();
+            while (true)
+            {
+                //提前return，延迟一帧开始检测
+                yield return 0;
+                if (GetGameMessage(GameMessage.Next)) NetworkSystem.LaunchServer();
+                if (GetGameMessage(GameMessage.Return)) NetworkSystem.LaunchClient();
+                if (GetGameMessage(GameMessage.GameWin)) NetworkSystem.ShutdownServer();
+                if (GetGameMessage(GameMessage.GameOver)) NetworkSystem.ShutdownClient();
+            }
         }
 
 
@@ -178,6 +189,7 @@ namespace GameSystem
         public static void Dialog(string msg, string ok = "OK")
         {
 #if UNITY_EDITOR
+            Debug("Dialog:" + msg);
             EditorUtility.DisplayDialog("The Matrix", msg, ok);
 #endif
         }
@@ -358,6 +370,6 @@ namespace GameSystem
         Return,
         Exit,
         GameOver,
-        GameWin
+        GameWin,
     }
 }
