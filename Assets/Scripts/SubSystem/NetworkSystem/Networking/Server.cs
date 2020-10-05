@@ -23,6 +23,7 @@ namespace GameSystem
             #endregion
 
             #region API ------------------------------------------
+            public bool TcpOn { get; private set; }
             public void Destroy()
             {
                 if (isDestroyed)
@@ -57,8 +58,18 @@ namespace GameSystem
             }
             public void UDPBoardcast(string message)
             {
-                connections.ForEach(conn => { UDPSend(message, conn.RemoteEndPoint); });
+                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+                udpClient.Send(messageBytes, messageBytes.Length, new IPEndPoint(IPAddress.Broadcast, Setting.clientUDPPort));
             }
+
+            public void TurnOnTCP()
+            {
+                TcpOn = true;
+                listener = new TcpListener(new IPEndPoint(NetworkSystem.LocalIPAddress, Setting.serverTCPPort));
+                listenThread = new Thread(ListenThread);
+                listenThread.Start();
+            }
+
             #endregion
 
             #region Inner Code -----------------------------------
@@ -83,10 +94,6 @@ namespace GameSystem
             public Server()
             {
                 TheMatrix.StartCoroutine(ConnectionThread(), typeof(Server));
-                listener = new TcpListener(new IPEndPoint(IPAddress.Parse(NetworkSystem.LocalIP), Setting.serverTCPPort));
-                listenThread = new Thread(ListenThread);
-                listenThread.Start();
-
                 udpClient = new UdpClient(Setting.serverUDPPort);
                 udpReceiveThread = new Thread(UDPReceiveThread);
                 udpReceiveThread.Start();
@@ -111,7 +118,7 @@ namespace GameSystem
                 {
                     try
                     {
-                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, Setting.serverUDPPort);
+                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, Setting.clientUDPPort);
                         byte[] buffer = udpClient.Receive(ref remoteIP);
                         string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                         Log($"UDPReceive{remoteIP}:{receiveString}");
@@ -167,7 +174,7 @@ namespace GameSystem
             private Queue<Connection> pendingCloseQueue = new Queue<Connection>();
             private string NewTcpId(IPEndPoint ip)
             {
-                if (ip.Address == NetworkSystem.ServerIPEndPoint.Address) return 0.ToString();
+                if (ip.Address == NetworkSystem.ServerIPAddress) return "0";
                 int output = 1;
                 foreach (Connection conn in connections)
                 {
@@ -208,7 +215,7 @@ namespace GameSystem
             {
                 #region API ------------------------------------------
                 public IPEndPoint RemoteEndPoint { get { return (IPEndPoint)client.Client.RemoteEndPoint; } }
-                public IPEndPoint UDPEndPoint { get { return new IPEndPoint(RemoteEndPoint.Address, RemoteEndPoint.Port - 1); } }
+                public IPEndPoint UDPEndPoint { get { return new IPEndPoint(RemoteEndPoint.Address, NetworkSystem.Setting.clientUDPPort); } }
                 public string netId;
                 public void Destroy()
                 {

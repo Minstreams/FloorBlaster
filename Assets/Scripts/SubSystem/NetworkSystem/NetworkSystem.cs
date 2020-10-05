@@ -5,6 +5,7 @@ using GameSystem.Setting;
 using GameSystem.Networking;
 using System.Net;
 using GameSystem.Networking.Packet;
+using System.Net.Sockets;
 
 namespace GameSystem
 {
@@ -89,35 +90,22 @@ namespace GameSystem
         // API ---------------------------------
         public static Server server = null;
         public static Client client = null;
-        public static string LocalIP
+        /// <summary>
+        /// 本地IP是否已经确定
+        /// </summary>
+        public static bool localIPCheck { private set; get; }
+        private static IPAddress localIPAddress = IPAddress.Any;
+        public static IPAddress LocalIPAddress
         {
-            get
-            {
-                return Setting.localIP;
-            }
-        }
-
-        private static string serverIP = "";
-        public static string ServerIP
-        {
-            get => serverIP;
+            get => localIPAddress;
             set
             {
-                serverIP = value;
-                serverEndPoint.Address = IPAddress.Parse(value);
+                localIPAddress = value;
+                localIPCheck = true;
             }
         }
+        public static IPAddress ServerIPAddress = IPAddress.Any;
 
-        private static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, Setting.serverTCPPort);
-        public static IPEndPoint ServerIPEndPoint
-        {
-            get => serverEndPoint;
-            set
-            {
-                serverEndPoint.Address = value.Address;
-                serverIP = value.Address.ToString();
-            }
-        }
         public static void LaunchServer()
         {
             isHost = true;
@@ -324,7 +312,7 @@ namespace GameSystem
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
             TheMatrix.onGameStart += OnGameStart;
-            Application.quitting += OnGameQuitting;
+            TheMatrix.onQuitting += OnGameQuitting;
             //随便找个Setting里的值，用于在分线程前提前初始化Setting
             int active = Setting.serverTCPPort;
         }
@@ -338,8 +326,8 @@ namespace GameSystem
         }
         private static void OnGameQuitting()
         {
-            ShutdownClient();
             ShutdownServer();
+            ShutdownClient();
         }
     }
 }

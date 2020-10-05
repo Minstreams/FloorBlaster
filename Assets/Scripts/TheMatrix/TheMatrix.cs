@@ -46,6 +46,9 @@ namespace GameSystem
                 yield return 0;
                 if (GetGameMessage(GameMessage.Exit))
                 {
+                    onQuitting?.Invoke();
+                    yield return 0;
+                    canQuit = true;
                     Application.Quit();
                 }
             }
@@ -73,6 +76,7 @@ namespace GameSystem
         // 开始菜单
         private IEnumerator _StartMenu()
         {
+            NetworkSystem.ShutdownClient();
             SceneSystem.LoadScene(GameScene.startMenu);
             yield return 0;
 
@@ -93,7 +97,7 @@ namespace GameSystem
             yield return 0;
 
             NetworkSystem.LaunchClient();
-            NetworkSystem.client.StartUDPBoardcast();
+            NetworkSystem.client.OpenUDP();
 
             ResetGameMessage();
             while (true)
@@ -112,7 +116,7 @@ namespace GameSystem
                 }
             }
 
-            NetworkSystem.client.StopUDPBoardcast();
+            NetworkSystem.client.CloseUDP();
         }
 
         private IEnumerator _Room()
@@ -183,6 +187,7 @@ namespace GameSystem
         /// 游戏开始委托，在主场景游戏开始时和游戏重新开始时调用
         /// </summary>
         public static event System.Action onGameStart;
+        public static event System.Action onQuitting;
 
 #if UNITY_EDITOR
         [MinsHeader("By Minstreams. The Matrix组件的核心，只能有一个。", SummaryType.CommentCenter)]
@@ -366,6 +371,7 @@ namespace GameSystem
         //游戏启动----------------------------
         private void Awake()
         {
+            Application.wantsToQuit += beforeQuitting;
             instance = this;
         }
         private void Start()
@@ -416,6 +422,12 @@ namespace GameSystem
                 }
             }
 #endif
+        }
+        private bool canQuit = false;
+        private bool beforeQuitting()
+        {
+            SendGameMessage(GameMessage.Exit);
+            return canQuit;
         }
         #endregion
     }

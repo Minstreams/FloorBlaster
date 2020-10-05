@@ -27,8 +27,7 @@ namespace GameSystem
                 isDestroyed = true;
 
                 Log("Destroy");
-
-                StopUDPBoardcast();
+                CloseUDP();
                 StopTCPConnecting();
             }
             public void Send(string message)
@@ -75,16 +74,12 @@ namespace GameSystem
                 {
                     try
                     {
-                        udpClient = new UdpClient(port - 1);
+                        udpClient = new UdpClient(Setting.clientUDPPort);
                     }
                     catch (SocketException ex)
                     {
                         Log(ex);
-                        if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
-                        {
-                            port = NetworkSystem.GetValidPort();
-                            continue;
-                        }
+                        continue;
                     }
                     catch (Exception ex)
                     {
@@ -93,42 +88,16 @@ namespace GameSystem
                         return;
                     }
                 } while (false);
+                udpReceiveThread = new Thread(UDPReceiveThread);
+                udpReceiveThread.Start();
             }
             public void CloseUDP()
             {
+                udpReceiveThread?.Abort();
                 udpClient?.Close();
                 udpClient = null;
             }
 
-            /// <summary>
-            /// 开始广播寻找服务器
-            /// </summary>
-            public void StartUDPBoardcast()
-            {
-                try
-                {
-                    OpenUDP();
-                    udpReceiveThread = new Thread(UDPReceiveThread);
-                    udpReceiveThread.Start();
-                    udpBoardcastThread = new Thread(UDPBoardcastThread);
-                    udpBoardcastThread.Start();
-                }
-                catch (Exception ex)
-                {
-                    Log(ex);
-                    StopUDPBoardcast();
-                    return;
-                }
-            }
-            /// <summary>
-            /// 结束广播，停止占用端口
-            /// </summary>
-            public void StopUDPBoardcast()
-            {
-                udpBoardcastThread?.Abort();
-                udpReceiveThread?.Abort();
-                CloseUDP();
-            }
             /// <summary>
             /// 开始tcp连接，加入房间
             /// </summary>
@@ -138,14 +107,13 @@ namespace GameSystem
                 {
                     try
                     {
-                        client = new TcpClient(new IPEndPoint(IPAddress.Parse(NetworkSystem.LocalIP), port));
+                        client = new TcpClient(new IPEndPoint(NetworkSystem.LocalIPAddress, port));
                         connectThread = new Thread(ConnectThread);
                         connectThread.Start();
                     }
                     catch (SocketException ex)
                     {
                         Log(ex);
-                        StopUDPBoardcast();
                         if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse) port = NetworkSystem.GetValidPort();
                         continue;
                     }
@@ -170,39 +138,9 @@ namespace GameSystem
             #endregion
 
             #region 流程相关 -------------------------------------
-            private Thread udpBoardcastThread;
-            private void UDPBoardcastThread()
-            {
-                // 向所有的PossibleIP发送Hello
-                string[] ips = NetworkSystem.GetPossibleIPs();
-                try
-                {
-                    while (true)
-                    {
-                        for (int i = 0; i < ips.Length; i++)
-                        {
-                            UDPSend(ips[i], NetworkSystem.clientHello);
-                            Thread.Sleep(Setting.udpBoardcastInterval);
-                        }
-                        Thread.Sleep(Setting.udpBoardcastRefreshInterval);
-                    }
-                }
-                catch (ThreadAbortException)
-                {
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Log(ex);
-                    StopUDPBoardcast();
-                    return;
-                }
-            }
 
-            private void TCPReceive(string packetMessage)
-            {
-                NetworkSystem.CallReceive(packetMessage);
-            }
+
+
             #endregion
 
             #region Inner Code -----------------------------------
@@ -242,7 +180,7 @@ namespace GameSystem
                 {
                     try
                     {
-                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, port - 1);
+                        IPEndPoint remoteIP = new IPEndPoint(IPAddress.Any, Setting.clientUDPPort);
                         byte[] buffer = udpClient.Receive(ref remoteIP);
                         string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                         Log($"UDPReceive{remoteIP}:{receiveString}");
@@ -283,7 +221,7 @@ namespace GameSystem
                     Log("Connecting……");
                     try
                     {
-                        client.Connect(NetworkSystem.ServerIPEndPoint);
+                        client.Connect(new IPEndPoint(NetworkSystem.LocalIPAddress, Setting.serverTCPPort));
                         // Block --------------------------------
                     }
                     catch (SocketException ex)
@@ -345,7 +283,7 @@ namespace GameSystem
                         }
                         receiveString = Encoding.UTF8.GetString(buffer, 0, count);
                         Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                        TCPReceive(receiveString);
+                        NetworkSystem.CallReceive(receiveString);
                     }
                 }
                 catch (ThreadAbortException)

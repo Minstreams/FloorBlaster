@@ -21,36 +21,40 @@ namespace GameSystem
             [MinsHeader("大厅的UI控制", SummaryType.CommentCenter, 1)]
             [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
 #endif
-
-            //Data
-            //[MinsHeader("Data", SummaryType.Header, 2)]
-
-
-            private Dictionary<IPEndPoint, UIRoomInfo> roomUIElements = new Dictionary<IPEndPoint, UIRoomInfo>();
-
-
+            private Dictionary<IPAddress, UIRoomInfo> roomUIElements = new Dictionary<IPAddress, UIRoomInfo>();
 
             [UDPReceive]
             private void UDPReceive(UDPPacket packet)
             {
-                var ep = packet.endPoint;
                 var pkt = NetworkSystem.StringToPacket(packet.message);
-                if (!pkt.MatchType(typeof(PacketRoomInfo))) return;
-                var roomInfo = pkt as PacketRoomInfo;
-                if (roomUIElements.ContainsKey(ep))
+                if (pkt.MatchType(typeof(PacketRoomInfo)))
                 {
-                    roomUIElements[ep].Title = roomInfo.roomTitle;
+                    var ep = packet.endPoint.Address;
+                    var roomInfo = pkt as PacketRoomInfo;
+                    if (roomUIElements.ContainsKey(ep))
+                    {
+                        roomUIElements[ep].Title = roomInfo.roomTitle;
+                    }
+                    else
+                    {
+                        var g = new GameObject(ep.ToString());
+                        g.transform.SetParent(transform);
+                        var el = g.AddComponent<UIRoomInfo>();
+                        el.Title = roomInfo.roomTitle;
+                        roomUIElements.Add(ep, el);
+                    }
+                    // 如果自己ip不确定，就向服务器发送回声检索
+                    if (!NetworkSystem.localIPCheck) NetworkSystem.client.UDPSend(NetworkSystem.PacketToString(new PacketIPEcho(packet.endPoint.Address)), packet.endPoint);
                 }
-                else
+                else if (pkt.MatchType(typeof(PacketIPEcho)))
                 {
-                    var g = new GameObject(ep.ToString());
-                    g.transform.SetParent(transform);
-                    var el = g.AddComponent<UIRoomInfo>();
-                    el.Title = roomInfo.roomTitle;
-                    roomUIElements.Add(ep, el);
+                    if (NetworkSystem.isHost)
+                    {
+                        NetworkSystem.ServerIPAddress = NetworkSystem.LocalIPAddress;
+                        TheMatrix.SendGameMessage(GameMessage.Next);
+                    }
                 }
             }
-
 
 
             //Server========================================
@@ -60,24 +64,29 @@ namespace GameSystem
             public void LaunchServer()
             {
                 NetworkSystem.LaunchServer();
+                StartCoroutine(BoardcastInfo());
             }
-            [UDPProcess]
-            private void UDPProcess(UDPPacket packet)
+
+            private IEnumerator BoardcastInfo()
             {
-                if (packet.message == NetworkSystem.clientHello)
+                while (true)
                 {
-                    NetworkSystem.server.UDPSend(NetworkSystem.PacketToString(new PacketRoomInfo(RoomName)), packet.endPoint);
+                    NetworkSystem.server.UDPBoardcast(NetworkSystem.PacketToString(new PacketRoomInfo(RoomName)));
+                    yield return new WaitForSeconds(NetworkSystem.Setting.udpBoardcastInterval);
                 }
             }
 
-
             private void OnGUI()
             {
+                if (GUILayout.Button("创建房间"))
+                {
+                    LaunchServer();
+                }
                 foreach (var ro in roomUIElements)
                 {
                     if (GUILayout.Button(ro.Value.Title))
                     {
-                        NetworkSystem.ServerIPEndPoint = ro.Key;
+                        NetworkSystem.ServerIPAddress = ro.Key;
                         TheMatrix.SendGameMessage(GameMessage.Next);
                     }
                 }
