@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
-using GameSystem.Networking;
+using GameSystem.Networking.Packet;
 
 namespace GameSystem
 {

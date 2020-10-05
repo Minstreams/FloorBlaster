@@ -1,17 +1,11 @@
-﻿namespace GameSystem
+﻿namespace GameSystem.Networking.Packet
 {
-    namespace Networking
+    public class PacketRoomInfo : Packet<PacketRoomInfo>
     {
-        namespace Packet
+        public string roomTitle;
+        public PacketRoomInfo(string title) : base()
         {
-            public class PacketRoomInfo : Packet<PacketRoomInfo>
-            {
-                public string roomTitle;
-                public PacketRoomInfo(string title) : base()
-                {
-                    roomTitle = title;
-                }
-            }
+            roomTitle = title;
         }
     }
 }

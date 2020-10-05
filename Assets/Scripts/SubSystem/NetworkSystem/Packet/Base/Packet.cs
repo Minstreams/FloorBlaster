@@ -1,17 +1,11 @@
-﻿namespace GameSystem
+﻿namespace GameSystem.Networking.Packet
 {
-    namespace Networking
+    public class Packet<T> : PacketBase
     {
-        namespace Packet
-        {
-            public class Packet<T> : PacketBase
-            {
 
-                public Packet()
-                {
-                    this.pktTypeStr = typeof(T).FullName;
-                }
-            }
+        public Packet()
+        {
+            this.pktTypeStr = typeof(T).FullName;
         }
     }
 }
