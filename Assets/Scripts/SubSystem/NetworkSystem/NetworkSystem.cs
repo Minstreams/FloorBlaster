@@ -134,6 +134,7 @@ namespace GameSystem
         }
         public static void ShutdownClient()
         {
+            TheMatrix.SendGameMessage(GameMessage.DisConnect);
             pendingShutdownClient = true;
         }
         /// <summary>
@@ -311,6 +312,7 @@ namespace GameSystem
             isHost = false;
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
+            TheMatrix.onGameReady += OnGameReady;
             TheMatrix.onGameStart += OnGameStart;
             TheMatrix.onQuitting += OnGameQuitting;
             //随便找个Setting里的值，用于在分线程前提前初始化Setting
@@ -319,6 +321,10 @@ namespace GameSystem
         private static void OnGameAwake()
         {
             StartCoroutine(MainThread());
+        }
+        private static void OnGameReady()
+        {
+            localIPCheck = false;
         }
         private static void OnGameStart()
         {

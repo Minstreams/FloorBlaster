@@ -70,6 +70,7 @@ namespace GameSystem
             }
 
             //Server========================================
+            private bool ipOccupied = false;
             [ContextMenu("LaunchServer")]
             public void LaunchServer()
             {
@@ -84,7 +85,7 @@ namespace GameSystem
                     if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
                     {
                         NetworkSystem.ShutdownServer();
-                        Application.OpenURL("http://info.minstreams.com");
+                        ipOccupied = true;
                     }
                 }
             }
@@ -100,7 +101,11 @@ namespace GameSystem
 
             private void OnGUI()
             {
-                if (GUILayout.Button("创建房间"))
+                if (ipOccupied)
+                {
+                    GUILayout.Button("相同地址已经存在一个服务器~");
+                }
+                else if (GUILayout.Button("创建房间"))
                 {
                     LaunchServer();
                 }

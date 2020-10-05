@@ -95,6 +95,7 @@ namespace GameSystem
         {
             NetworkSystem.LaunchClient();
             SceneSystem.LoadScene(GameScene.lobby);
+            onGameReady?.Invoke();
             yield return 0;
 
             ResetGameMessage();
@@ -121,6 +122,19 @@ namespace GameSystem
             yield return 0;
 
             NetworkSystem.client.StartTCPConnecting();
+
+            ResetGameMessage();
+            while (true)
+            {
+                yield return 0;
+                if (GetGameMessage(GameMessage.DisConnect))
+                {
+                    // 回到开始菜单
+                    NetworkSystem.ShutdownServer();
+                    StartCoroutine(_StartMenu());
+                    break;
+                }
+            }
 
         }
 
@@ -179,6 +193,7 @@ namespace GameSystem
         /// 游戏初始化委托，在进入游戏第一个场景时调用
         /// </summary>
         public static event System.Action onGameAwake;
+        public static event System.Action onGameReady;
         /// <summary>
         /// 游戏开始委托，在主场景游戏开始时和游戏重新开始时调用
         /// </summary>
@@ -234,7 +249,7 @@ namespace GameSystem
         /// </summary>
         public static void ResetGameMessage()
         {
-            gameMessageReciver.Initialize();
+            for (int i = 0; i < gameMessageReciver.Length; ++i) gameMessageReciver[i] = false;
         }
         public static void Debug(string msg)
         {
@@ -383,6 +398,7 @@ namespace GameSystem
             else
             {
                 onGameAwake?.Invoke();
+                onGameReady?.Invoke();
                 onGameStart?.Invoke();
                 SceneManager.UnloadSceneAsync("System");
             }
@@ -438,5 +454,6 @@ namespace GameSystem
         Exit,
         GameOver,
         GameWin,
+        DisConnect,
     }
 }
