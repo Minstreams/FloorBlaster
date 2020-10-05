@@ -201,7 +201,7 @@ namespace GameSystem
 
             private void TCPReceive(string packetMessage)
             {
-                NetworkSystem.InvokeReceive(packetMessage);
+                NetworkSystem.CallReceive(packetMessage);
             }
             #endregion
 
@@ -246,7 +246,7 @@ namespace GameSystem
                         byte[] buffer = udpClient.Receive(ref remoteIP);
                         string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                         Log($"UDPReceive{remoteIP}:{receiveString}");
-                        NetworkSystem.InvokeUDPReceive(new UDPPacket(receiveString, remoteIP));
+                        NetworkSystem.CallUDPReceive(new UDPPacket(receiveString, remoteIP));
                     }
                     catch (SocketException ex)
                     {
@@ -311,13 +311,25 @@ namespace GameSystem
                 stream = client.GetStream();
                 receiveThread = new Thread(ReceiveThread);
                 receiveThread.Start();
-                NetworkSystem.InvokeConnected();
+                NetworkSystem.CallConnected();
             }
             private void ReceiveThread()
             {
                 string receiveString;
 
                 int count;
+                count = stream.Read(buffer, 0, buffer.Length);
+                // Block --------------------------------
+                if (count <= 0)
+                {
+                    Log("与服务器断开连接");
+                    NetworkSystem.ShutdownClient();
+                    NetworkSystem.CallDisconnected();
+                    return;
+                }
+                receiveString = Encoding.UTF8.GetString(buffer, 0, count);
+                NetworkSystem.netId = receiveString;
+
                 try
                 {
                     while (true)
@@ -328,7 +340,7 @@ namespace GameSystem
                         {
                             Log("与服务器断开连接");
                             NetworkSystem.ShutdownClient();
-                            NetworkSystem.InvokeDisconnected();
+                            NetworkSystem.CallDisconnected();
                             return;
                         }
                         receiveString = Encoding.UTF8.GetString(buffer, 0, count);

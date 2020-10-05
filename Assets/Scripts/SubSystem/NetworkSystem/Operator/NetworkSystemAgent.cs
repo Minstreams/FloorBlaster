@@ -37,9 +37,9 @@ namespace GameSystem
             [ContextMenu("ShutdownClient")]
             public void ShutdownClient() { NetworkSystem.ShutdownClient(); }
             [ContextMenu("InvokeConnected")]
-            public void InvokeConnected() { NetworkSystem.InvokeConnected(); }
+            public void InvokeConnected() { NetworkSystem.CallConnected(); }
             [ContextMenu("InvokeDisconnected")]
-            public void InvokeDisconnected() { NetworkSystem.InvokeDisconnected(); }
+            public void InvokeDisconnected() { NetworkSystem.CallDisconnected(); }
 
             //Output
             [MinsHeader("Events", SummaryType.Header, 2)]

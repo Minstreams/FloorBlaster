@@ -4,6 +4,7 @@ using UnityEngine;
 using GameSystem.Setting;
 using GameSystem.Networking;
 using System.Net;
+using GameSystem.Networking.Packet;
 
 namespace GameSystem
 {
@@ -14,9 +15,18 @@ namespace GameSystem
     public class NetworkSystem : SubSystem<NetworkSystemSetting>
     {
         public const int maxMsgLength = 2048;
+        /// <summary>
+        /// 寻找主机时使用的验证消息
+        /// </summary>
         public const string clientHello = "Hellov0.0.1";
-        public const string serverHi = "Hi~";
+        /// <summary>
+        /// 是否是主机
+        /// </summary>
         public static bool isHost { get; private set; }
+        /// <summary>
+        /// 当前的网络ID
+        /// </summary>
+        public static string netId;
 
 
 
@@ -31,8 +41,6 @@ namespace GameSystem
         private static Queue<string> pendingReceiveQueue = new Queue<string>();
         private static bool pendingConnected = false;
         private static bool pendingDisconnected = false;
-        private static Dictionary<string, System.Action<PacketBase>> tcpDistributors = new Dictionary<string, System.Action<PacketBase>>();
-        private static Dictionary<string, System.Action<PacketBase>> tcpProcessors = new Dictionary<string, System.Action<PacketBase>>();
         private static IEnumerator MainThread()
         {
             while (true)
@@ -63,12 +71,19 @@ namespace GameSystem
                     {
                         tcpDistributors[pkt.pktTypeStr]?.Invoke(pkt);
                     }
+                    if (pkt.IsSubclassOf(typeof(PacketToId)))
+                    {
+                        var pktTid = pkt as PacketToId;
+                        if (tcpSubDistributors.ContainsKey(pktTid.id))
+                        {
+                            tcpSubDistributors[pktTid.id]?.Invoke(pktTid);
+                        }
+                    }
                 }
                 if (pendingConnected) { pendingConnected = false; OnConnected?.Invoke(); }
                 if (pendingDisconnected) { pendingDisconnected = false; OnDisconnected?.Invoke(); }
             }
         }
-
 
 
         // API ---------------------------------
@@ -174,14 +189,6 @@ namespace GameSystem
             if (!tcpDistributors.ContainsKey(typeStr)) tcpDistributors.Add(typeStr, null);
             tcpDistributors[typeStr] += listener;
         }
-        public static System.Action<PacketBase> ListenForPacket<pktType>(System.Action<pktType> listener) where pktType : PacketBase
-        {
-            string typeStr = typeof(pktType).FullName;
-            if (!tcpDistributors.ContainsKey(typeStr)) tcpDistributors.Add(typeStr, null);
-            System.Action<PacketBase> output = pkt => listener.Invoke(pkt as pktType);
-            tcpDistributors[typeStr] += output;
-            return output;
-        }
         public static void StopListenForPacket(string typeStr, System.Action<PacketBase> listener)
         {
             if (tcpDistributors.ContainsKey(typeStr))
@@ -189,52 +196,43 @@ namespace GameSystem
                 tcpDistributors[typeStr] -= listener;
             }
         }
-        /// <summary>
-        /// 结束监听，必须输入开始监听时获取的Action对象
-        /// </summary>
-        public static void StopListenForPacket<pktType>(System.Action<PacketBase> listener) where pktType : PacketBase
+        public static void ListenForPacketToId(string id, System.Action<PacketToId> listener)
         {
-            string typeStr = typeof(pktType).FullName;
-            if (tcpDistributors.ContainsKey(typeStr))
+            if (!tcpSubDistributors.ContainsKey(id)) tcpSubDistributors.Add(id, null);
+            tcpSubDistributors[id] += listener;
+        }
+        public static void StopListenForPacketToId(string id, System.Action<PacketToId> listener)
+        {
+            if (tcpSubDistributors.ContainsKey(id))
             {
-                tcpDistributors[typeStr] -= pkt => listener.Invoke(pkt as pktType);
+                tcpSubDistributors[id] -= listener;
             }
         }
         /// <summary>
         /// 客户端注册Process事件
         /// </summary>
-        public static void ProcessPacket(string typeStr, System.Action<PacketBase> processor)
+        public static void ProcessPacket(string typeStr, System.Action<PacketBase, Server.Connection> processor)
         {
             if (!tcpProcessors.ContainsKey(typeStr)) tcpProcessors.Add(typeStr, null);
             tcpProcessors[typeStr] += processor;
         }
-        /// <summary>
-        /// 客户端注册Process事件
-        /// </summary>
-        public static System.Action<PacketBase> ProcessPacket<pktType>(System.Action<pktType> processor) where pktType : PacketBase
-        {
-            string typeStr = typeof(pktType).FullName;
-            if (!tcpProcessors.ContainsKey(typeStr)) tcpProcessors.Add(typeStr, null);
-            System.Action<PacketBase> output = pkt => processor.Invoke(pkt as pktType);
-            tcpProcessors[typeStr] += output;
-            return output;
-        }
-        public static void StopProcessPacket(string typeStr, System.Action<PacketBase> processor)
+        public static void StopProcessPacket(string typeStr, System.Action<PacketBase, Server.Connection> processor)
         {
             if (tcpProcessors.ContainsKey(typeStr))
             {
                 tcpProcessors[typeStr] -= processor;
             }
         }
-        /// <summary>
-        /// 结束服务器处理，必须输入开始服务器处理时获取的Action对象
-        /// </summary>
-        public static void StopProcessPacket<pktType>(System.Action<PacketBase> processor) where pktType : PacketBase
+        public static void ProcessPacketFromId(string id, System.Action<PacketBase, Server.Connection> processor)
         {
-            string typeStr = typeof(pktType).FullName;
-            if (tcpProcessors.ContainsKey(typeStr))
+            if (!tcpSubProcessors.ContainsKey(id)) tcpSubProcessors.Add(id, null);
+            tcpSubProcessors[id] += processor;
+        }
+        public static void StopProcessPacketFromId(string id, System.Action<PacketBase, Server.Connection> processor)
+        {
+            if (tcpSubProcessors.ContainsKey(id))
             {
-                tcpProcessors[typeStr] -= processor;
+                tcpSubProcessors[id] -= processor;
             }
         }
         /// <summary>
@@ -254,35 +252,68 @@ namespace GameSystem
         public static event System.Action<string> OnReceive;
         public static event System.Action OnConnected;
         public static event System.Action OnDisconnected;
+        public static event System.Action<UDPPacket> OnProcessUDPPacket;
+        public static event System.Action<string, Server.Connection> OnProcess;
+
+        /// <summary>
+        /// 客户端接收消息
+        /// </summary>
+        private static Dictionary<string, System.Action<PacketBase>> tcpDistributors = new Dictionary<string, System.Action<PacketBase>>();
+        /// <summary>
+        /// 客户端根据ID筛选接收消息
+        /// </summary>
+        private static Dictionary<string, System.Action<PacketToId>> tcpSubDistributors = new Dictionary<string, System.Action<PacketToId>>();
+        /// <summary>
+        /// 服务器处理消息
+        /// </summary>
+        private static Dictionary<string, System.Action<PacketBase, Server.Connection>> tcpProcessors = new Dictionary<string, System.Action<PacketBase, Server.Connection>>();
+        /// <summary>
+        /// 服务器根据ID筛选处理
+        /// </summary>
+        private static Dictionary<string, System.Action<PacketBase, Server.Connection>> tcpSubProcessors = new Dictionary<string, System.Action<PacketBase, Server.Connection>>();
+
 
         // For Servers & Client ----------------
         public static void CallLog(string message)
         {
             pendingLogQueue.Enqueue(message);
         }
-        public static void InvokeUDPReceive(UDPPacket packet)
+
+        // 客户端
+        public static void CallUDPReceive(UDPPacket packet)
         {
             pendingUDPReceiveQueue.Enqueue(packet);
         }
-        public static void InvokeReceive(string message)
+        public static void CallReceive(string message)
         {
             pendingReceiveQueue.Enqueue(message);
         }
-        public static void InvokeConnected()
+        public static void CallConnected()
         {
             pendingConnected = true;
         }
-        public static void InvokeDisconnected()
+        public static void CallDisconnected()
         {
             pendingDisconnected = true;
         }
-        public static void CallProcessPacket(string pktMessage)
+
+        // 服务端
+        public static void CallProcessPacket(string message, Server.Connection connection)
         {
-            PacketBase pkt = StringToPacket(pktMessage);
+            PacketBase pkt = StringToPacket(message);
+            OnProcess?.Invoke(message, connection);
             if (tcpProcessors.ContainsKey(pkt.pktTypeStr))
             {
-                tcpProcessors[pkt.pktTypeStr]?.Invoke(pkt);
+                tcpProcessors[pkt.pktTypeStr]?.Invoke(pkt, connection);
             }
+            if (tcpSubProcessors.ContainsKey(connection.netId))
+            {
+                tcpSubProcessors[connection.netId]?.Invoke(pkt, connection);
+            }
+        }
+        public static void CallProcessUDPPacket(UDPPacket packet)
+        {
+            OnProcessUDPPacket?.Invoke(packet);
         }
 
 

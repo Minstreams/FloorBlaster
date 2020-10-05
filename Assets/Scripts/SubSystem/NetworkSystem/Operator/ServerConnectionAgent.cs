@@ -33,8 +33,8 @@ namespace GameSystem
             public void Init(Server.Connection connection)
             {
                 this.connection = connection;
-                connection.onReceive += msg => output?.Invoke(msg);
-                NetworkSystem.server.onUDPReceive += msg => output?.Invoke(msg.message);
+                NetworkSystem.OnProcess += (msg, conn) => output?.Invoke(msg);
+                NetworkSystem.OnProcessUDPPacket += msg => output?.Invoke(msg.message);
             }
 
             //Input

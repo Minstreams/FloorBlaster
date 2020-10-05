@@ -13,7 +13,7 @@ namespace GameSystem
         /// 大厅的UI控制
         /// </summary>
         [AddComponentMenu("[NetworkSystem]/Operator/LobbyManager")]
-        public class LobbyManager : MonoBehaviour
+        public class LobbyManager : NetworkObject
         {
 #if UNITY_EDITOR
             [MinsHeader("Operator of NetworkSystem", SummaryType.PreTitleOperator, -1)]
@@ -29,7 +29,9 @@ namespace GameSystem
             private Dictionary<IPEndPoint, UIRoomInfo> roomUIElements = new Dictionary<IPEndPoint, UIRoomInfo>();
 
 
-            private void OnUDPReceive(UDPPacket packet)
+
+            [UDPReceive]
+            private void UDPReceive(UDPPacket packet)
             {
                 var ep = packet.endPoint;
                 var pkt = NetworkSystem.StringToPacket(packet.message);
@@ -48,10 +50,26 @@ namespace GameSystem
                     roomUIElements.Add(ep, el);
                 }
             }
-            private void Awake()
+
+
+
+            //Server========================================
+            [Label]
+            public string RoomName;
+            [ContextMenu("LaunchServer")]
+            public void LaunchServer()
             {
-                NetworkSystem.OnUDPReceive += OnUDPReceive;
+                NetworkSystem.LaunchServer();
             }
+            [UDPProcess]
+            private void UDPProcess(UDPPacket packet)
+            {
+                if (packet.message == NetworkSystem.clientHello)
+                {
+                    NetworkSystem.server.UDPSend(NetworkSystem.PacketToString(new PacketRoomInfo(RoomName)), packet.endPoint);
+                }
+            }
+
 
             private void OnGUI()
             {
@@ -64,10 +82,6 @@ namespace GameSystem
                     }
                 }
             }
-
-            //Input
-            //[ContextMenu("SomeFuntion")]
-            //public void SomeFuntion(){}
         }
     }
 }

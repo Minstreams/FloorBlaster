@@ -12,6 +12,10 @@ namespace GameSystem
             {
                 return type.FullName == pktTypeStr;
             }
+            public bool IsSubclassOf(Type type)
+            {
+                return type.IsSubclassOf(pktType);
+            }
         }
     }
 }

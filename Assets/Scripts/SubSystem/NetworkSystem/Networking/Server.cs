@@ -18,24 +18,7 @@ namespace GameSystem
         public class Server
         {
             #region 流程相关 -------------------------------------
-            public enum ServerState
-            {
-                room,
-                pendingStart,
-                inGame,
-            }
-            public ServerState currentState = ServerState.room;
-            private void UDPReceive(UDPPacket packet)
-            {
-                if (currentState != ServerState.room) return;
-                if (packet.message != NetworkSystem.clientHello) return;
-                UDPSend(NetworkSystem.PacketToString(new PacketRoomInfo(NetworkSystem.serverHi)), packet.endPoint);
-            }
 
-            private void TCPReceive(TCPPacket packet)
-            {
-                NetworkSystem.CallProcessPacket(packet.message);
-            }
 
             #endregion
 
@@ -121,7 +104,6 @@ namespace GameSystem
             private UdpClient udpClient;
             private Thread udpReceiveThread;
 
-            public event Action<UDPPacket> onUDPReceive;
             private void UDPReceiveThread()
             {
                 Log("开始收UDP包……");
@@ -134,8 +116,7 @@ namespace GameSystem
                         string receiveString = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
                         Log($"UDPReceive{remoteIP}:{receiveString}");
                         UDPPacket packet = new UDPPacket(receiveString, remoteIP);
-                        onUDPReceive?.Invoke(packet);
-                        UDPReceive(packet);
+                        NetworkSystem.CallProcessUDPPacket(packet);
                     }
                     catch (SocketException ex)
                     {
@@ -184,6 +165,17 @@ namespace GameSystem
             }
             private Queue<TcpClient> pendingConnectionQueue = new Queue<TcpClient>();
             private Queue<Connection> pendingCloseQueue = new Queue<Connection>();
+            private string NewTcpId(IPEndPoint ip)
+            {
+                if (ip.Address == NetworkSystem.ServerIPEndPoint.Address) return 0.ToString();
+                int output = 1;
+                foreach (Connection conn in connections)
+                {
+                    int id = int.Parse(conn.netId);
+                    if (output <= id) output = id + 1;
+                }
+                return output.ToString();
+            }
             private void CallConnect(TcpClient client)
             {
                 pendingConnectionQueue.Enqueue(client);
@@ -193,7 +185,12 @@ namespace GameSystem
                 while (true)
                 {
                     yield return 0;
-                    while (pendingConnectionQueue.Count > 0) connections.Add(new Connection(pendingConnectionQueue.Dequeue(), this));
+                    while (pendingConnectionQueue.Count > 0)
+                    {
+                        var cl = pendingConnectionQueue.Dequeue();
+                        var conn = new Connection(cl, this, NewTcpId(cl.Client.RemoteEndPoint as IPEndPoint));
+                        connections.Add(conn);
+                    }
                     while (pendingCloseQueue.Count > 0)
                     {
                         var conn = pendingCloseQueue.Dequeue();
@@ -212,6 +209,7 @@ namespace GameSystem
                 #region API ------------------------------------------
                 public IPEndPoint RemoteEndPoint { get { return (IPEndPoint)client.Client.RemoteEndPoint; } }
                 public IPEndPoint UDPEndPoint { get { return new IPEndPoint(RemoteEndPoint.Address, RemoteEndPoint.Port - 1); } }
+                public string netId;
                 public void Destroy()
                 {
                     if (isDestroyed)
@@ -241,15 +239,16 @@ namespace GameSystem
                 private Thread receiveThread;
                 private byte[] buffer = new byte[NetworkSystem.maxMsgLength];
 
-                public event Action<string> onReceive;
 
-                public Connection(TcpClient client, Server server)
+                public Connection(TcpClient client, Server server, string netId)
                 {
                     this.server = server;
                     this.client = client;
+                    this.netId = netId;
                     stream = client.GetStream();
                     receiveThread = new Thread(ReceiveThread);
                     receiveThread.Start();
+                    Send(netId);
 
                     Log("已连接。");
                 }
@@ -277,7 +276,7 @@ namespace GameSystem
                             }
                             receiveString = Encoding.UTF8.GetString(buffer, 0, count);
                             Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                            server.TCPReceive(new TCPPacket(receiveString, this));
+                            NetworkSystem.CallProcessPacket(receiveString, this);
                         }
                     }
                     catch (ThreadAbortException)
