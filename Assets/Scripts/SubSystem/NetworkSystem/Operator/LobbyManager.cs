@@ -3,6 +3,8 @@ using GameSystem.Networking.Packet;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
+using UnityEditor;
 using UnityEngine;
 
 namespace GameSystem
@@ -56,22 +58,42 @@ namespace GameSystem
                 }
             }
 
+            private void Start()
+            {
+                NetworkSystem.client.OpenUDP();
+
+            }
+            protected override void OnDestroy()
+            {
+                base.OnDestroy();
+                NetworkSystem.client.CloseUDP();
+            }
 
             //Server========================================
-            [Label]
-            public string RoomName;
             [ContextMenu("LaunchServer")]
             public void LaunchServer()
             {
-                NetworkSystem.LaunchServer();
-                StartCoroutine(BoardcastInfo());
+                try
+                {
+                    NetworkSystem.LaunchServer();
+                    RoomManager.currentRoomName = "默认房间名";
+                    StartCoroutine(BoardcastInfo());
+                }
+                catch (SocketException ex)
+                {
+                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                    {
+                        NetworkSystem.ShutdownServer();
+                        Application.OpenURL("http://info.minstreams.com");
+                    }
+                }
             }
 
             private IEnumerator BoardcastInfo()
             {
                 while (true)
                 {
-                    NetworkSystem.server.UDPBoardcast(NetworkSystem.PacketToString(new PacketRoomInfo(RoomName)));
+                    NetworkSystem.server.UDPBoardcast(NetworkSystem.PacketToString(new PacketRoomInfo(RoomManager.currentRoomName)));
                     yield return new WaitForSeconds(NetworkSystem.Setting.udpBoardcastInterval);
                 }
             }

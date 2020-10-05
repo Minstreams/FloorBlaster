@@ -93,11 +93,9 @@ namespace GameSystem
         // 联机大厅
         private IEnumerator _Lobby()
         {
+            NetworkSystem.LaunchClient();
             SceneSystem.LoadScene(GameScene.lobby);
             yield return 0;
-
-            NetworkSystem.LaunchClient();
-            NetworkSystem.client.OpenUDP();
 
             ResetGameMessage();
             while (true)
@@ -115,8 +113,6 @@ namespace GameSystem
                     break;
                 }
             }
-
-            NetworkSystem.client.CloseUDP();
         }
 
         private IEnumerator _Room()
