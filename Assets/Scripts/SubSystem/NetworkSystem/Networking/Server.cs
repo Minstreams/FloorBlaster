@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace GameSystem.Networking
 {
@@ -230,7 +231,7 @@ namespace GameSystem.Networking
             }
             public void Send(string message)
             {
-                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+                byte[] messageBytes = Encoding.UTF8.GetBytes(message + NetworkSystem.overMark);
                 stream.Write(messageBytes, 0, messageBytes.Length);
             }
             #endregion
@@ -242,6 +243,8 @@ namespace GameSystem.Networking
             NetworkStream stream;
             Thread receiveThread;
             byte[] buffer = new byte[NetworkSystem.maxMsgLength];
+            string receiveStringBuffer = "";
+            Regex PacketCutter = new Regex(@"^([^✡]*)✡(.*)$");
 
 
             public Connection(TcpClient client, Server server, string netId)
@@ -281,7 +284,15 @@ namespace GameSystem.Networking
                         }
                         receiveString = Encoding.UTF8.GetString(buffer, 0, count);
                         Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                        NetworkSystem.CallProcessPacket(receiveString, this);
+                        receiveStringBuffer += receiveString;
+
+                        Match match = PacketCutter.Match(receiveStringBuffer);
+                        while (match.Success)
+                        {
+                            NetworkSystem.CallProcessPacket(match.Groups[1].Value, this);
+                            receiveStringBuffer = match.Groups[2].Value;
+                            match = PacketCutter.Match(receiveStringBuffer);
+                        }
                     }
                 }
                 catch (ThreadAbortException)

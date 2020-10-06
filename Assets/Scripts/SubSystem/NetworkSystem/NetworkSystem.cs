@@ -23,6 +23,8 @@ namespace GameSystem
         /// </summary>
         public const string clientHello = "Hellov0.0.1";
 
+        public const char overMark = '✡';
+
         /// <summary>
         /// 是否是主机
         /// </summary>

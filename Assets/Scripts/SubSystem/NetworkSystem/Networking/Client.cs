@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace GameSystem.Networking
 {
@@ -38,7 +39,7 @@ namespace GameSystem.Networking
                 Log("Sending failed.");
                 return;
             }
-            byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+            byte[] messageBytes = Encoding.UTF8.GetBytes(message + NetworkSystem.overMark);
             stream.Write(messageBytes, 0, messageBytes.Length);
         }
         public void UDPSend(string message, IPEndPoint remote)
@@ -213,6 +214,8 @@ namespace GameSystem.Networking
         NetworkStream stream;
         Thread receiveThread;
         byte[] buffer = new byte[NetworkSystem.maxMsgLength];
+        string receiveStringBuffer = "";
+        Regex PacketCutter = new Regex(@"^([^✡]*)✡(.*)$");
 
         void ConnectThread()
         {
@@ -264,7 +267,7 @@ namespace GameSystem.Networking
                 return;
             }
             receiveString = Encoding.UTF8.GetString(buffer, 0, count);
-            NetworkSystem.netId = receiveString;
+            NetworkSystem.netId = receiveString.Substring(0, receiveString.Length - 1);
             NetworkSystem.CallConnection();
 
             try
@@ -282,8 +285,15 @@ namespace GameSystem.Networking
                     // TODO 得处理超长度的情况
                     receiveString = Encoding.UTF8.GetString(buffer, 0, count);
                     Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
-                    NetworkSystem.CallReceive(receiveString);
-                    Thread.Sleep(1);
+                    receiveStringBuffer += receiveString;
+
+                    Match match = PacketCutter.Match(receiveStringBuffer);
+                    while (match.Success)
+                    {
+                        NetworkSystem.CallReceive(match.Groups[1].Value);
+                        receiveStringBuffer = match.Groups[2].Value;
+                        match = PacketCutter.Match(receiveStringBuffer);
+                    }
                 }
             }
             catch (ThreadAbortException)

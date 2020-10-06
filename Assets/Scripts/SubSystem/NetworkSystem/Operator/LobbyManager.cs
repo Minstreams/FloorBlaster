@@ -41,6 +41,7 @@ namespace GameSystem.Operator
             {
                 var ep = packet.endPoint.Address;
                 var roomInfo = pkt as URoomBrief;
+                if (roomInfo.hello != NetworkSystem.clientHello) return;    //版本不一致
                 if (roomUIElements.ContainsKey(ep))
                 {
                     roomUIElements[ep].Title = roomInfo.title;
