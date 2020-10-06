@@ -52,23 +52,6 @@ namespace GameSystem.Networking
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             udpClient.Send(messageBytes, messageBytes.Length, remote);
         }
-        public void UDPSend(string ip, string message)
-        {
-            if (udpClient == null)
-            {
-                Log("UDP not opened!");
-                return;
-            }
-            byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-            try
-            {
-                udpClient.Send(messageBytes, messageBytes.Length, new IPEndPoint(IPAddress.Parse(ip), Setting.serverUDPPort));
-            }
-            catch (Exception ex)
-            {
-                Log(ex);
-            }
-        }
 
         public void OpenUDP()
         {
@@ -154,7 +137,7 @@ namespace GameSystem.Networking
             try
             {
                 port = NetworkSystem.GetValidPort();
-                Log("客户端已启用……");
+                Log("客户端已启用……:" + port);
             }
             catch (Exception ex)
             {
@@ -176,7 +159,7 @@ namespace GameSystem.Networking
 
         void UDPReceiveThread()
         {
-            Log("开始收UDP包……");
+            Log("开始收UDP包……:" + Setting.clientUDPPort);
             while (true)
             {
                 try
@@ -221,17 +204,17 @@ namespace GameSystem.Networking
         {
             do
             {
-                Log("Connecting……");
+                Log($"Connecting……|ip:{NetworkSystem.LocalIPAddress}:{port}|remote:{NetworkSystem.ServerIPAddress}:{Setting.serverTCPPort}");
                 try
                 {
-                    client.Connect(new IPEndPoint(NetworkSystem.LocalIPAddress, Setting.serverTCPPort));
+                    client.Connect(new IPEndPoint(NetworkSystem.ServerIPAddress, Setting.serverTCPPort));
                     // Block --------------------------------
                 }
                 catch (SocketException ex)
                 {
                     Log(ex);
-                    Log("连接失败！重新连接中……");
                     if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse) port = NetworkSystem.GetValidPort();
+                    Log("连接失败！重新连接中……:" + port);
                     Thread.Sleep(1000);
                     continue;
                 }

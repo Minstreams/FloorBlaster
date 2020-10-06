@@ -65,7 +65,7 @@ namespace GameSystem
         /// </summary>
         public static int GetValidPort()
         {
-            LocalIPPort = Random.Range(Setting.minClientPort, Setting.maxClientPort + 1);
+            LocalIPPort = LocalIPPort < Setting.minClientPort || LocalIPPort >= Setting.maxClientPort ? Setting.minClientPort : LocalIPPort + 1;
             return LocalIPPort;
         }
         // Packet 封包解包

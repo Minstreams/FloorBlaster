@@ -180,6 +180,8 @@ namespace GameSystem.Operator
 
         private void OnGUI()
         {
+            GUILayout.Label("LocalIP:" + NetworkSystem.LocalIPAddress);
+            GUILayout.Label("ServerIP:" + NetworkSystem.ServerIPAddress);
             GUILayout.Label("Room:" + roomInfo.name);
             GUILayout.Label(thisID);
         }

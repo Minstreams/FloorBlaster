@@ -117,15 +117,27 @@ namespace GameSystem.Operator
             }
         }
 
+        string localIp = "";
+        string serverIp = "";
         void OnGUI()
         {
             if (ipOccupied)
             {
                 GUILayout.Button("相同地址已经存在一个服务器~");
             }
-            else if (GUILayout.Button("创建房间"))
+            else
             {
-                LaunchServer();
+                if (GUILayout.Button("创建房间"))
+                {
+                    LaunchServer();
+                }
+                localIp = GUILayout.TextField(localIp);
+                serverIp = GUILayout.TextField(serverIp);
+                if (GUILayout.Button("连接"))
+                {
+                    NetworkSystem.LocalIPAddress = IPAddress.Parse(localIp);
+                    NetworkSystem.ConnectTo(IPAddress.Parse(serverIp));
+                }
             }
             if (LocalIPCheck)
             {

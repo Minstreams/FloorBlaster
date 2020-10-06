@@ -57,6 +57,7 @@ namespace GameSystem.Networking
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             udpClient.Send(messageBytes, messageBytes.Length, new IPEndPoint(IPAddress.Broadcast, Setting.clientUDPPort));
+            Log($"UDPSend255.255.255.255:{message}");
         }
 
         public void TurnOnTCP()
@@ -95,7 +96,7 @@ namespace GameSystem.Networking
             udpReceiveThread = new Thread(UDPReceiveThread);
             udpReceiveThread.Start();
 
-            Log("服务端已启用……");
+            Log("服务端已启用……|UDP:" + Setting.serverUDPPort);
         }
         ~Server()
         {
@@ -171,7 +172,7 @@ namespace GameSystem.Networking
         Queue<Connection> pendingCloseQueue = new Queue<Connection>();
         string NewTcpId(IPEndPoint ip)
         {
-            if (ip.Address.Equals(NetworkSystem.ServerIPAddress) && ip.Port.Equals(NetworkSystem.LocalIPPort)) return "0";
+            if (ip.Address.Equals(NetworkSystem.LocalIPAddress) && ip.Port.Equals(NetworkSystem.LocalIPPort)) return "0";
             int output = 1;
             foreach (Connection conn in connections)
             {
