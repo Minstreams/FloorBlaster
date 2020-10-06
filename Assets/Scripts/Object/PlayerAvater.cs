@@ -1,4 +1,5 @@
-﻿using GameSystem.Networking;
+﻿using GameSystem;
+using GameSystem.Networking;
 using UnityEngine;
 
 public class PlayerAvater : GameSystem.Networking.NetworkPlayer
@@ -24,6 +25,15 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     private void FixedUpdate()
     {
         transform.position = Vector3.Lerp(transform.position, targetPosition, lerpRate);
+
+        if (!IsConnected)
+        {
+            //离线操作
+            inputLerped = Vector2.Lerp(inputLerped, InputSystem.movement, lerpRate);
+            targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
+            targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
+        }
+
         if (IsServer) ServerUpdate();
     }
 
@@ -42,7 +52,7 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     float posSyncTimer = 0;
     void ServerUpdate()
     {
-        inputLerped = Vector2.Lerp(inputLerped, inputVec, Mathf.Pow(0.001f, Time.deltaTime / Setting.lerpTime));
+        inputLerped = Vector2.Lerp(inputLerped, inputVec, lerpRate);
         targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
         targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
 

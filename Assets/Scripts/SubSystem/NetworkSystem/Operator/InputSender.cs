@@ -20,18 +20,9 @@ namespace GameSystem.Operator
         //Data
         //[MinsHeader("Data", SummaryType.Header, 2)]
 
-        private void Start()
-        {
-            InputSystem._Move += InputMove;
-        }
-        private protected override void OnDestroy()
-        {
-            InputSystem._Move -= InputMove;
-            base.OnDestroy();
-        }
 
         Vector2 lastMovement;
-        Vector2 movement;
+        Vector2 movement => InputSystem.movement;
         float timer;
         private void Update()
         {
@@ -45,9 +36,6 @@ namespace GameSystem.Operator
                 lastMovement = movement;
             }
         }
-        void InputMove(Vector2 input)
-        {
-            movement = input;
-        }
+
     }
 }

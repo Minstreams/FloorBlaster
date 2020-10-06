@@ -43,6 +43,7 @@ namespace GameSystem
         /// </summary>
         public static event System.Action<Vector2> _Move;
         public static void Move(Vector2 val) { _Move?.Invoke(val); }
+        public static Vector2 movement { get; private set; }
 
         // States-----------------------------
         /// <summary>
@@ -66,7 +67,7 @@ namespace GameSystem
                 if (GetKey(InputKey.Up)) output.y += 1;
                 if (GetKey(InputKey.Down)) output.y -= 1;
                 if (output.sqrMagnitude > 1) output.Normalize();
-
+                movement = output;
                 _Move?.Invoke(output);
             }
         }
