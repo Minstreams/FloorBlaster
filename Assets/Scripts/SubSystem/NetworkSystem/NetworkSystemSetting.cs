@@ -32,5 +32,12 @@ namespace GameSystem.Setting
         public float lerpTime = 0.385f;
         [Label]
         public float inputSendInterval = 0.1f;
+        /// <summary>
+        /// 变化超过阈值立即同步
+        /// </summary>
+        [Label]
+        public float inputSendMoveThreadhold = 0.5f;
+        [Label]
+        public float posSyncInterval = 0.1f;
     }
 }

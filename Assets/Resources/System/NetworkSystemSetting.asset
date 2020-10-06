@@ -20,3 +20,5 @@ MonoBehaviour:
   udpBoardcastInterval: 1
   lerpTime: 0.385
   inputSendInterval: 0.15
+  inputSendMoveThreadhold: 0.5
+  posSyncInterval: 0.3

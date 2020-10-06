@@ -31,7 +31,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PkRoomInfo(currentRoomName));
+                ServerUDPBoardcastPacket(new PkRoomBrief(currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }

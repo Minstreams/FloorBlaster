@@ -36,7 +36,9 @@ namespace GameSystem.Operator
         private void Update()
         {
             timer += Time.deltaTime;
-            if (timer > Setting.inputSendInterval && movement != lastMovement)
+
+            // 连续移动时按照设定的间隔发送，输入变化超过阈值马上发送
+            if (movement != lastMovement && (timer > Setting.inputSendInterval || Vector2.Distance(movement, lastMovement) > Setting.inputSendMoveThreadhold))
             {
                 timer = 0;
                 ClientSendPacket(new PkiMove(movement));

@@ -37,20 +37,20 @@ namespace GameSystem.Operator
         void UDPReceive(UDPPacket packet)
         {
             var pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PkRoomInfo)))
+            if (pkt.MatchType(typeof(PkRoomBrief)))
             {
                 var ep = packet.endPoint.Address;
-                var roomInfo = pkt as PkRoomInfo;
+                var roomInfo = pkt as PkRoomBrief;
                 if (roomUIElements.ContainsKey(ep))
                 {
-                    roomUIElements[ep].Title = roomInfo.roomTitle;
+                    roomUIElements[ep].Title = roomInfo.title;
                 }
                 else
                 {
                     var g = new GameObject(ep.ToString());
                     g.transform.SetParent(transform);
                     var el = g.AddComponent<UIRoomInfo>();
-                    el.Title = roomInfo.roomTitle;
+                    el.Title = roomInfo.title;
                     roomUIElements.Add(ep, el);
                 }
                 if ((IsServer && !IsConnected) || !LocalIPCheck)
@@ -112,7 +112,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PkRoomInfo(RoomManager.currentRoomName));
+                ServerUDPBoardcastPacket(new PkRoomBrief(RoomManager.currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }

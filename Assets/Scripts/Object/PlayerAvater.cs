@@ -1,8 +1,4 @@
-﻿using GameSystem;
-using GameSystem.Networking;
-using JetBrains.Annotations;
-using System.Collections;
-using System.Collections.Generic;
+﻿using GameSystem.Networking;
 using UnityEngine;
 
 public class PlayerAvater : GameSystem.Networking.NetworkPlayer
@@ -36,16 +32,24 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     // 在服务器端 ========================================
     public Vector2 inputVec;
     public Vector2 inputLerped;
+
+    float posSyncTimer = 0;
     void ServerUpdate()
     {
         inputLerped = Vector2.Lerp(inputVec, inputLerped, Mathf.Pow(0.001f, Time.deltaTime / Setting.lerpTime));
         targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
         targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
+
+        posSyncTimer += Time.deltaTime;
+        if (posSyncTimer > Setting.posSyncInterval)
+        {
+            posSyncTimer = 0;
+            ServerBoardcastPacket(new PkPos(netId, targetPosition));
+        }
     }
     [TCPProcess]
     void PacketInputMoveProcess(PkiMove packet, Server.Connection connection)
     {
         inputVec = packet.input;
-        ServerBoardcastPacket(new PkPos(connection.netId, targetPosition));
     }
 }
