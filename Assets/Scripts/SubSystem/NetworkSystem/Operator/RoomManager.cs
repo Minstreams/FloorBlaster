@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using GameSystem.Networking.Packet;
 using GameSystem.Networking;
 
 namespace GameSystem.Operator
@@ -32,7 +31,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PacketRoomInfo(currentRoomName));
+                ServerUDPBoardcastPacket(new PkRoomInfo(currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }
@@ -41,9 +40,9 @@ namespace GameSystem.Operator
         void UDPPRocess(UDPPacket packet)
         {
             PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PacketIPEcho)))
+            if (pkt.MatchType(typeof(PkEcho)))
             {
-                ServerUDPSendPacket(new PacketIPEcho(packet.endPoint.Address), packet.endPoint);
+                ServerUDPSendPacket(new PkEcho(packet.endPoint.Address), packet.endPoint);
             }
         }
     }

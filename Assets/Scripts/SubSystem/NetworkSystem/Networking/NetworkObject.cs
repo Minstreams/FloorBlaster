@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using GameSystem.Networking.Packet;
 
 namespace GameSystem.Networking
 {

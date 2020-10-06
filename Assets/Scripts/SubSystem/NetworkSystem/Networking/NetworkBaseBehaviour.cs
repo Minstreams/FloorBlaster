@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Net;
-using GameSystem.Networking.Packet;
 
 namespace GameSystem.Networking
 {

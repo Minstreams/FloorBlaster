@@ -1,7 +1,5 @@
 using GameSystem.Networking;
-using GameSystem.Networking.Packet;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace GameSystem.Operator
@@ -25,7 +23,6 @@ namespace GameSystem.Operator
         private void Start()
         {
             InputSystem._Move += InputMove;
-            StartCoroutine(MoveSender());
         }
         private protected override void OnDestroy()
         {
@@ -33,20 +30,22 @@ namespace GameSystem.Operator
             base.OnDestroy();
         }
 
+        Vector2 lastMovement;
         Vector2 movement;
+        float timer;
+        private void Update()
+        {
+            timer += Time.deltaTime;
+            if (timer > Setting.inputSendInterval && movement != lastMovement)
+            {
+                timer = 0;
+                ClientSendPacket(new PkiMove(movement));
+                lastMovement = movement;
+            }
+        }
         void InputMove(Vector2 input)
         {
             movement = input;
-        }
-        IEnumerator MoveSender()
-        {
-            //todo 做如下优化
-            //var interval = new WaitForSeconds(Setting.inputSendInterval);
-            while (true)
-            {
-                yield return new WaitForSeconds(Setting.inputSendInterval);
-                ClientSendPacket(new PacketInputMove(movement));
-            }
         }
     }
 }

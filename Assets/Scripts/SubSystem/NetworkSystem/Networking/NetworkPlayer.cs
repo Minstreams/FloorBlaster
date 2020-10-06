@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
-using GameSystem.Networking.Packet;
 
 namespace GameSystem.Networking
 {
@@ -34,7 +33,7 @@ namespace GameSystem.Networking
             string tp = packet.pktTypeStr;
             if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet, connection });
         }
-        private void _TCPReceive(PacketToId packet)
+        private void _TCPReceive(Pktid packet)
         {
             string tp = packet.pktTypeStr;
             if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet });
@@ -90,7 +89,7 @@ namespace GameSystem.Networking
                 else if (m.GetCustomAttribute<TCPReceiveAttribute>() != null)
                 {
                     var ps = m.GetParameters();
-                    if (ps.Length != 1 || !ps[0].ParameterType.IsSubclassOf(typeof(PacketToId)))
+                    if (ps.Length != 1 || !ps[0].ParameterType.IsSubclassOf(typeof(Pktid)))
                     {
                         string errMsg = m.Name + "方法不符合TCPReceive的参数要求。参数：";
                         for (int i = 0; i < ps.Length; i++) errMsg += $"[{i}]{ps[i].ParameterType.FullName}";

@@ -4,7 +4,6 @@ using UnityEngine;
 using GameSystem.Setting;
 using GameSystem.Networking;
 using System.Net;
-using GameSystem.Networking.Packet;
 
 namespace GameSystem
 {
@@ -163,12 +162,12 @@ namespace GameSystem
                 tcpDistributors[typeStr] -= listener;
             }
         }
-        public static void ListenForPacketToId(string id, System.Action<PacketToId> listener)
+        public static void ListenForPacketToId(string id, System.Action<Pktid> listener)
         {
             if (!tcpSubDistributors.ContainsKey(id)) tcpSubDistributors.Add(id, null);
             tcpSubDistributors[id] += listener;
         }
-        public static void StopListenForPacketToId(string id, System.Action<PacketToId> listener)
+        public static void StopListenForPacketToId(string id, System.Action<Pktid> listener)
         {
             if (tcpSubDistributors.ContainsKey(id))
             {
@@ -273,7 +272,7 @@ namespace GameSystem
         /// <summary>
         /// 客户端根据ID筛选接收消息
         /// </summary>
-        static Dictionary<string, System.Action<PacketToId>> tcpSubDistributors = new Dictionary<string, System.Action<PacketToId>>();
+        static Dictionary<string, System.Action<Pktid>> tcpSubDistributors = new Dictionary<string, System.Action<Pktid>>();
         /// <summary>
         /// 服务器处理消息
         /// </summary>
@@ -320,9 +319,9 @@ namespace GameSystem
                     {
                         tcpDistributors[pkt.pktTypeStr]?.Invoke(pkt);
                     }
-                    if (pkt.IsSubclassOf(typeof(PacketToId)))
+                    if (pkt.IsSubclassOf(typeof(Pktid)))
                     {
-                        var pktTid = pkt as PacketToId;
+                        var pktTid = pkt as Pktid;
                         if (tcpSubDistributors.ContainsKey(pktTid.id))
                         {
                             tcpSubDistributors[pktTid.id]?.Invoke(pktTid);

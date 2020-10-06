@@ -1,5 +1,4 @@
 using GameSystem.Networking;
-using GameSystem.Networking.Packet;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
@@ -38,10 +37,10 @@ namespace GameSystem.Operator
         void UDPReceive(UDPPacket packet)
         {
             var pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PacketRoomInfo)))
+            if (pkt.MatchType(typeof(PkRoomInfo)))
             {
                 var ep = packet.endPoint.Address;
-                var roomInfo = pkt as PacketRoomInfo;
+                var roomInfo = pkt as PkRoomInfo;
                 if (roomUIElements.ContainsKey(ep))
                 {
                     roomUIElements[ep].Title = roomInfo.roomTitle;
@@ -58,14 +57,14 @@ namespace GameSystem.Operator
                 {
                     // 新建房间时发送定位Echo
                     // 或者不确定自己地址时发送查询Echo
-                    ClientUDPSendPacket(new PacketIPEcho(packet.endPoint.Address), packet.endPoint);
+                    ClientUDPSendPacket(new PkEcho(packet.endPoint.Address), packet.endPoint);
                 }
             }
-            else if (pkt.MatchType(typeof(PacketIPEcho)))
+            else if (pkt.MatchType(typeof(PkEcho)))
             {
                 // 客户端收到Echo，确定自己的地址
                 if (LocalIPCheck) return;
-                PacketIPEcho pktEcho = pkt as PacketIPEcho;
+                PkEcho pktEcho = pkt as PkEcho;
                 LocalIPAddress = pktEcho.address;
             }
         }
@@ -73,9 +72,9 @@ namespace GameSystem.Operator
         void UDPPRocess(UDPPacket packet)
         {
             PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PacketIPEcho)))
+            if (pkt.MatchType(typeof(PkEcho)))
             {
-                IPAddress addr = (pkt as PacketIPEcho).address;
+                IPAddress addr = (pkt as PkEcho).address;
 
                 if (addr.Equals(packet.endPoint.Address) && !NetworkSystem.server.TcpOn)
                 {
@@ -113,7 +112,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PacketRoomInfo(RoomManager.currentRoomName));
+                ServerUDPBoardcastPacket(new PkRoomInfo(RoomManager.currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }
