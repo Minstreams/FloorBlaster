@@ -208,6 +208,7 @@ namespace GameSystem
         public static event System.Action OnDisconnection;
         public static event System.Action<UDPPacket> OnProcessUDPPacket;
         public static event System.Action<string, Server.Connection> OnProcess;
+        public static event System.Action<Server.Connection> OnProcessConnection;
         public static event System.Action<Server.Connection> OnProcessDisconnection;
 
         #endregion
@@ -261,6 +262,10 @@ namespace GameSystem
         public static void CallProcessUDPPacket(UDPPacket packet)
         {
             OnProcessUDPPacket?.Invoke(packet);
+        }
+        public static void CallProcessConnection(Server.Connection connection)
+        {
+            OnProcessConnection?.Invoke(connection);
         }
         public static void CallProcessDisconnection(Server.Connection connection)
         {

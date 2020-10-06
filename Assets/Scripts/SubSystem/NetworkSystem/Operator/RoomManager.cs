@@ -45,5 +45,11 @@ namespace GameSystem.Operator
                 ServerUDPSendPacket(new PkEcho(packet.endPoint.Address), packet.endPoint);
             }
         }
+
+        [TCPConnection]
+        void ConnectionTest()
+        {
+            Debug.Log("Connected!");
+        }
     }
 }

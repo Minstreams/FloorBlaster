@@ -3,8 +3,8 @@
 namespace GameSystem.Networking
 {
     /// <summary>
-    /// 服务器端处理UDP消息
+    /// 服务器端有Connection连接上时
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    class UDPProcessAttribute : Attribute { }
+    class TCPConnectionProcessAttribute : Attribute { }
 }

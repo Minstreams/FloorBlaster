@@ -253,6 +253,7 @@ namespace GameSystem.Networking
                 receiveThread = new Thread(ReceiveThread);
                 receiveThread.Start();
                 Send(netId);
+                NetworkSystem.CallProcessConnection(this);
 
                 Log("已连接。");
             }

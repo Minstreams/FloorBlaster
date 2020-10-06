@@ -6,8 +6,5 @@ namespace GameSystem.Networking
     /// 服务器端处理TCP消息
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    class TCPProcessAttribute : Attribute
-    {
-
-    }
+    class TCPProcessAttribute : Attribute { }
 }

@@ -14,11 +14,7 @@ namespace GameSystem.Networking
         /// </summary>
         public string netId = "0";
         public bool initializeOnAwake = false;
-        event System.Action onDestroyEvent;
-        protected virtual private void OnDestroy()
-        {
-            onDestroyEvent?.Invoke();
-        }
+
         /// <summary>
         /// 服务器处理消息
         /// </summary>
@@ -47,7 +43,7 @@ namespace GameSystem.Networking
         {
             NetworkSystem.ProcessPacketFromId(netId, _TCPProcess);
             NetworkSystem.ListenForPacketToId(netId, _TCPReceive);
-            onDestroyEvent += () =>
+            _onDestroyEvent += () =>
             {
                 NetworkSystem.StopProcessPacketFromId(netId, _TCPProcess);
                 NetworkSystem.StopListenForPacketToId(netId, _TCPReceive);
@@ -57,62 +53,18 @@ namespace GameSystem.Networking
             //Debug.Log("Start Processing. Type:" + this.GetType().FullName);
             foreach (var m in ms)
             {
-
+                if (_AttributeHandle(m)) continue;
                 if (m.GetCustomAttribute<TCPProcessAttribute>() != null)
                 {
-                    var ps = m.GetParameters();
-                    if (ps.Length != 2 || !ps[0].ParameterType.IsSubclassOf(typeof(PacketBase)) || ps[1].ParameterType != typeof(Server.Connection))
-                    {
-                        string errMsg = m.Name + "方法不符合TCPProcess的参数要求。参数：";
-                        for (int i = 0; i < ps.Length; i++) errMsg += $"[{i}]{ps[i].ParameterType.FullName}";
-                        throw new System.Exception(errMsg);
-                    }
-                    string tp = ps[0].ParameterType.FullName;
-                    if (!tcpProcessors.ContainsKey(tp)) tcpProcessors.Add(tp, null);
-                    tcpProcessors[tp] += m.Invoke;
-                    //Debug.Log(m.Name + "|TCPProcessAttribute");
-                }
-                else if (m.GetCustomAttribute<UDPProcessAttribute>() != null)
-                {
-                    var ps = m.GetParameters();
-                    if (ps.Length != 1 || ps[0].ParameterType != typeof(UDPPacket))
-                    {
-                        string errMsg = m.Name + "方法不符合UDPProcess的参数要求。参数：";
-                        for (int i = 0; i < ps.Length; i++) errMsg += $"[{i}]{ps[i].ParameterType.FullName}";
-                        throw new System.Exception(errMsg);
-                    }
-                    System.Action<UDPPacket> mAction = (pkt) => { m.Invoke(this, new object[] { pkt }); };
-                    NetworkSystem.OnProcessUDPPacket += mAction;
-                    onDestroyEvent += () => { NetworkSystem.OnProcessUDPPacket -= mAction; };
-                    //Debug.Log(m.Name + "|UDPProcessAttribute");
+                    string pType = _ParametersCheck<TCPProcessAttribute>(m, typeof(PacketBase), typeof(Server.Connection));
+                    if (!tcpProcessors.ContainsKey(pType)) tcpProcessors.Add(pType, null);
+                    tcpProcessors[pType] += m.Invoke;
                 }
                 else if (m.GetCustomAttribute<TCPReceiveAttribute>() != null)
                 {
-                    var ps = m.GetParameters();
-                    if (ps.Length != 1 || !ps[0].ParameterType.IsSubclassOf(typeof(Pktid)))
-                    {
-                        string errMsg = m.Name + "方法不符合TCPReceive的参数要求。参数：";
-                        for (int i = 0; i < ps.Length; i++) errMsg += $"[{i}]{ps[i].ParameterType.FullName}";
-                        throw new System.Exception(errMsg);
-                    }
-                    string tp = ps[0].ParameterType.FullName;
-                    if (!tcpDistributors.ContainsKey(tp)) tcpDistributors.Add(tp, null);
-                    tcpDistributors[tp] += m.Invoke;
-                    //Debug.Log(m.Name + "|TCPReceiveAttribute");
-                }
-                else if (m.GetCustomAttribute<UDPReceiveAttribute>() != null)
-                {
-                    var ps = m.GetParameters();
-                    if (ps.Length != 1 || ps[0].ParameterType != typeof(UDPPacket))
-                    {
-                        string errMsg = m.Name + "方法不符合UDPReceive的参数要求。参数：";
-                        for (int i = 0; i < ps.Length; i++) errMsg += $"[{i}]{ps[i].ParameterType.FullName}";
-                        throw new System.Exception(errMsg);
-                    }
-                    System.Action<UDPPacket> mAction = (pkt) => { m.Invoke(this, new object[] { pkt }); };
-                    NetworkSystem.OnUDPReceive += mAction;
-                    onDestroyEvent += () => { NetworkSystem.OnUDPReceive -= mAction; };
-                    //Debug.Log(m.Name + "|UDPReceiveAttribute");
+                    string pType = _ParametersCheck<TCPReceiveAttribute>(m, typeof(Pktid));
+                    if (!tcpDistributors.ContainsKey(pType)) tcpDistributors.Add(pType, null);
+                    tcpDistributors[pType] += m.Invoke;
                 }
             }
         }
