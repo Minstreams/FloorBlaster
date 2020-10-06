@@ -36,6 +36,7 @@ namespace GameSystem.Networking
             if (stream == null || !stream.CanWrite)
             {
                 Log("Sending failed.");
+                return;
             }
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             stream.Write(messageBytes, 0, messageBytes.Length);

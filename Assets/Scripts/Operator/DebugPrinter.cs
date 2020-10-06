@@ -27,7 +27,7 @@ namespace GameSystem.Operator
         int currentIndex = 0;
         static int count = 0;
         float singleLineHeight = UnityEditor.EditorGUIUtility.singleLineHeight;
-        GUIStyle style = new GUIStyle("box");
+        GUIStyle style;
         private void Start()
         {
             currentIndex = count;
@@ -39,6 +39,7 @@ namespace GameSystem.Operator
                 g = g.parent;
             }
             preStr = gameObject.scene.name + preStr;
+            style = new GUIStyle("box");
             singleLineHeight = style.lineHeight + style.margin.vertical + 2;
         }
         void OnGUI()
