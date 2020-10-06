@@ -22,3 +22,4 @@ MonoBehaviour:
   dataAutoSave:
   - {fileID: 11400000, guid: 50be0f90bf9dd0747aeeab3ef13d2e5e, type: 2}
   - {fileID: 11400000, guid: a61537b682559764fa31079b435b95d5, type: 2}
+  - {fileID: 11400000, guid: 5aaaa3b03fab3714d97d31dbdfcbf879, type: 2}

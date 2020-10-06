@@ -13,6 +13,6 @@ public class Pkt<T> : PacketBase
 {
     public Pkt()
     {
-        this.pktTypeStr = typeof(T).FullName;
+        this.ts = typeof(T).FullName;
     }
 }

@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using GameSystem;
+using GameSystem.Operator;
+using System.Collections.Generic;
 
 /// <summary>
 /// 请求查询服务器信息
@@ -10,20 +12,41 @@ public class RInfo : Pkt<RInfo> { }
 /// </summary>
 public class CPlayerInfo : Pkt<CPlayerInfo>
 {
-    public PlayerAvater.PlayerInfo info;
+    public PersonalizationSystem.PlayerInfo info;
 
-    public CPlayerInfo(PlayerAvater.PlayerInfo info) : base()
+    public CPlayerInfo(PersonalizationSystem.PlayerInfo info) : base()
     {
         this.info = info;
     }
 }
 
 /// <summary>
-/// 初始化房间的所有信息
+/// 房间的信息
 /// </summary>
 public class SInfo : Pkt<SInfo>
 {
-    public SInfo() : base()
+    public PersonalizationSystem.RoomInfo info;
+    public SInfo(PersonalizationSystem.RoomInfo info) : base()
     {
+        this.info = info;
+    }
+}
+
+/// <summary>
+/// 所有玩家的信息
+/// </summary>
+public class SPlayerInfo : Pkt<SPlayerInfo>
+{
+    public List<RoomManager.PlayerRecordUnit> records;
+
+    public SPlayerInfo(Dictionary<string, PlayerAvater> playersDatabase) : base()
+    {
+        records = new List<RoomManager.PlayerRecordUnit>();
+        var i = playersDatabase.GetEnumerator();
+        while (i.MoveNext())
+        {
+            var pair = i.Current;
+            records.Add(new RoomManager.PlayerRecordUnit(pair.Key, pair.Value.info, pair.Value.transform.position));
+        }
     }
 }

@@ -13,7 +13,6 @@ namespace GameSystem.Networking
         /// 当前物体的网络ID
         /// </summary>
         public string netId = "0";
-        public bool initializeOnAwake = false;
 
         /// <summary>
         /// 服务器处理消息
@@ -26,29 +25,36 @@ namespace GameSystem.Networking
 
         void _TCPProcess(PacketBase packet, Server.Connection connection)
         {
-            string tp = packet.pktTypeStr;
+            string tp = packet.ts;
             if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet, connection });
         }
         void _TCPReceive(Pktid packet)
         {
-            string tp = packet.pktTypeStr;
-            if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet });
+            string tp = packet.ts;
+            if (tcpDistributors.ContainsKey(tp)) tcpDistributors[tp]?.Invoke(this, new object[] { packet });
         }
 
+        public bool isIdActive = false;
         /// <summary>
-        /// 必须设置netId后手动调用此方法
+        /// 必须手动调用此方法
         /// </summary>
-        [ContextMenu("Initialize")]
-        public void Initialize()
+        public void ActivateId(string netId)
         {
+            if (isIdActive) return;
+            isIdActive = true;
+            this.netId = netId;
             NetworkSystem.ProcessPacketFromId(netId, _TCPProcess);
             NetworkSystem.ListenForPacketToId(netId, _TCPReceive);
-            _onDestroyEvent += () =>
-            {
-                NetworkSystem.StopProcessPacketFromId(netId, _TCPProcess);
-                NetworkSystem.StopListenForPacketToId(netId, _TCPReceive);
-            };
-
+        }
+        public void DeactivateId()
+        {
+            if (!isIdActive) return;
+            isIdActive = false;
+            NetworkSystem.StopProcessPacketFromId(netId, _TCPProcess);
+            NetworkSystem.StopListenForPacketToId(netId, _TCPReceive);
+        }
+        protected virtual private void Awake()
+        {
             var ms = this.GetType().GetRuntimeMethods();
             //Debug.Log("Start Processing. Type:" + this.GetType().FullName);
             foreach (var m in ms)
@@ -67,10 +73,7 @@ namespace GameSystem.Networking
                     tcpDistributors[pType] += m.Invoke;
                 }
             }
-        }
-        protected virtual private void Awake()
-        {
-            if (initializeOnAwake) Initialize();
+            _onDestroyEvent += DeactivateId;
         }
     }
 }

@@ -143,7 +143,6 @@ namespace GameSystem.Networking
         }
         #endregion
 
-
         #region Inner Code -----------------------------------
         GameSystem.Setting.NetworkSystemSetting Setting { get { return NetworkSystem.Setting; } }
         int port;
@@ -250,7 +249,6 @@ namespace GameSystem.Networking
             stream = client.GetStream();
             receiveThread = new Thread(ReceiveThread);
             receiveThread.Start();
-            NetworkSystem.CallConnection();
         }
         void ReceiveThread()
         {
@@ -267,6 +265,7 @@ namespace GameSystem.Networking
             }
             receiveString = Encoding.UTF8.GetString(buffer, 0, count);
             NetworkSystem.netId = receiveString;
+            NetworkSystem.CallConnection();
 
             try
             {
@@ -280,9 +279,11 @@ namespace GameSystem.Networking
                         NetworkSystem.ShutdownClient();
                         return;
                     }
+                    // TODO 得处理超长度的情况
                     receiveString = Encoding.UTF8.GetString(buffer, 0, count);
                     Log($"Receive{client.Client.LocalEndPoint}:{receiveString}");
                     NetworkSystem.CallReceive(receiveString);
+                    Thread.Sleep(1);
                 }
             }
             catch (ThreadAbortException)

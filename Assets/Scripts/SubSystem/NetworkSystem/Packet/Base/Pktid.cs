@@ -6,7 +6,7 @@ public class Pktid<T> : Pktid
 {
     public Pktid(string id) : base(id)
     {
-        this.pktTypeStr = typeof(T).FullName;
+        this.ts = typeof(T).FullName;
     }
 }
 /// <summary>

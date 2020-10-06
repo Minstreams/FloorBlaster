@@ -170,7 +170,7 @@ namespace GameSystem.Networking
         Queue<Connection> pendingCloseQueue = new Queue<Connection>();
         string NewTcpId(IPEndPoint ip)
         {
-            if (ip.Address.Equals(NetworkSystem.ServerIPAddress)) return "0";
+            if (ip.Address.Equals(NetworkSystem.ServerIPAddress) && ip.Port.Equals(NetworkSystem.LocalIPPort)) return "0";
             int output = 1;
             foreach (Connection conn in connections)
             {

@@ -2,14 +2,17 @@
 
 public class PacketBase
 {
-    public string pktTypeStr;
-    public Type pktType { get { return Type.GetType(pktTypeStr); } }
+    /// <summary>
+    /// typeString
+    /// </summary>
+    public string ts;
+    public Type pktType { get { return Type.GetType(ts); } }
     public bool MatchType(Type type)
     {
-        return type.FullName == pktTypeStr;
+        return type.FullName == ts;
     }
     public bool IsSubclassOf(Type type)
     {
-        return type.IsSubclassOf(pktType);
+        return pktType.IsSubclassOf(type);
     }
 }

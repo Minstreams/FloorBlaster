@@ -18,7 +18,9 @@ MonoBehaviour:
   minClientPort: 12306
   maxClientPort: 17851
   udpBoardcastInterval: 1
+  playerPrefab: {fileID: 2418600590292655767, guid: 105f39e1f9e5d824bb7ac15f453dba27,
+    type: 3}
   lerpTime: 0.385
-  inputSendInterval: 0.15
+  inputSendInterval: 0.5
   inputSendMoveThreadhold: 0.5
-  posSyncInterval: 0.3
+  posSyncInterval: 0.1

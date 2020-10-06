@@ -96,7 +96,6 @@ namespace GameSystem.Operator
             try
             {
                 NetworkSystem.LaunchServer();
-                RoomManager.currentRoomName = "默认房间名";
                 StartCoroutine(BoardcastInfo());
             }
             catch (SocketException ex)
@@ -112,7 +111,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new URoomBrief(RoomManager.currentRoomName));
+                ServerUDPBoardcastPacket(new URoomBrief(PersonalizationSystem.LocalRoomInfo.name));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }

@@ -4,6 +4,7 @@ using UnityEngine;
 using GameSystem.Setting;
 using GameSystem.Networking;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace GameSystem
 {
@@ -50,6 +51,7 @@ namespace GameSystem
         }
         static IPAddress localIPAddress = IPAddress.Any;
         public static IPAddress ServerIPAddress { get; private set; } = IPAddress.Any;
+        public static int LocalIPPort = 0;
 
         public static Server server = null;
         public static Client client = null;
@@ -61,7 +63,8 @@ namespace GameSystem
         /// </summary>
         public static int GetValidPort()
         {
-            return Random.Range(Setting.minClientPort, Setting.maxClientPort + 1);
+            LocalIPPort = Random.Range(Setting.minClientPort, Setting.maxClientPort + 1);
+            return LocalIPPort;
         }
         // Packet 封包解包
         public static PacketBase StringToPacket(string str)
@@ -78,9 +81,15 @@ namespace GameSystem
             }
             return null;
         }
+        /// <summary>
+        /// 用来压缩vec2后的小数点位数
+        /// </summary>
+        static Regex vec2Compressor = new Regex("\\{\"x\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"y\"\\:(-?\\d+\\.\\d{1,3})\\d*\\}", RegexOptions.Multiline);
         public static string PacketToString(PacketBase pkt)
         {
-            return JsonUtility.ToJson(pkt);
+            string output = vec2Compressor.Replace(JsonUtility.ToJson(pkt), "{\"x\":$1,\"y\":$2}");
+            if (string.IsNullOrWhiteSpace(output)) throw new System.Exception("PacketEmpty!");
+            return output;
         }
 
         // 服务器客户端控制
@@ -250,9 +259,9 @@ namespace GameSystem
         {
             PacketBase pkt = StringToPacket(message);
             OnProcess?.Invoke(message, connection);
-            if (tcpProcessors.ContainsKey(pkt.pktTypeStr))
+            if (tcpProcessors.ContainsKey(pkt.ts))
             {
-                tcpProcessors[pkt.pktTypeStr]?.Invoke(pkt, connection);
+                tcpProcessors[pkt.ts]?.Invoke(pkt, connection);
             }
             if (tcpSubProcessors.ContainsKey(connection.netId))
             {
@@ -325,9 +334,9 @@ namespace GameSystem
                     string msg = pendingReceiveQueue.Dequeue();
                     OnReceive?.Invoke(msg);
                     var pkt = StringToPacket(msg);
-                    if (tcpDistributors.ContainsKey(pkt.pktTypeStr))
+                    if (tcpDistributors.ContainsKey(pkt.ts))
                     {
-                        tcpDistributors[pkt.pktTypeStr]?.Invoke(pkt);
+                        tcpDistributors[pkt.ts]?.Invoke(pkt);
                     }
                     if (pkt.IsSubclassOf(typeof(Pktid)))
                     {

@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class PlayerAvater : GameSystem.Networking.NetworkPlayer
 {
+    public static PlayerAvater local;
+
     // 参数
-    [System.Serializable]
-    public class PlayerInfo
-    {
-        public float speed = 5;
-        public float weight = 5;
-    }
-    public PlayerInfo info;
+    public bool isLocal = false;
+    /// <summary>
+    /// 个性化数据
+    /// </summary>
+    public PersonalizationSystem.PlayerInfo info;
+
+    public float speed = 8;
 
     // 本地处理 ==========================================
     public Vector3 targetPosition;
@@ -20,6 +22,7 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     private void Start()
     {
         lerpRate = 1 - Mathf.Pow(0.001f, Time.fixedDeltaTime / Setting.lerpTime);
+        if (isLocal) local = this;
     }
 
     private void FixedUpdate()
@@ -30,18 +33,48 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
         {
             //离线操作
             inputLerped = Vector2.Lerp(inputLerped, InputSystem.movement, lerpRate);
-            targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
-            targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
         }
+        else
+        {
+            inputLerped = Vector2.Lerp(inputLerped, inputVec, lerpRate);
+        }
+
+        targetPosition.x += inputLerped.x * Time.deltaTime * speed;
+        targetPosition.z += inputLerped.y * Time.deltaTime * speed;
 
         if (IsServer) ServerUpdate();
     }
 
     [TCPReceive]
-    void PacketPositionReceive(SiPos packet)
+    void SiPosReceive(SiPos packet)
     {
         if (IsServer) return;
         targetPosition = packet.position;
+    }
+    [TCPReceive]
+    void SiMoveReceive(SiMove packet)
+    {
+        if (!IsServer)
+        {
+            inputVec = packet.input;
+        }
+    }
+
+    [TCPConnection]
+    void OnConnection()
+    {
+        if (isLocal)
+        {
+            ActivateId(NetworkSystem.netId);
+        }
+    }
+    [TCPDisconnection]
+    void OnDisconnection()
+    {
+        if (isLocal)
+        {
+            DeactivateId();
+        }
     }
 
 
@@ -52,10 +85,6 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     float posSyncTimer = 0;
     void ServerUpdate()
     {
-        inputLerped = Vector2.Lerp(inputLerped, inputVec, lerpRate);
-        targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
-        targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
-
         posSyncTimer += Time.fixedDeltaTime;
         if (posSyncTimer > Setting.posSyncInterval)
         {
@@ -64,8 +93,9 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
         }
     }
     [TCPProcess]
-    void PacketInputMoveProcess(IMove packet, Server.Connection connection)
+    void IMoveProcess(IMove packet, Server.Connection connection)
     {
         inputVec = packet.input;
+        ServerBoardcastPacket(new SiMove(connection.netId, packet.input));
     }
 }
