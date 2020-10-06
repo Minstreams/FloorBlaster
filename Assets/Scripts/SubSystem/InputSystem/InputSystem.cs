@@ -65,6 +65,7 @@ namespace GameSystem
                 if (GetKey(InputKey.Right)) output.x += 1;
                 if (GetKey(InputKey.Up)) output.y += 1;
                 if (GetKey(InputKey.Down)) output.y -= 1;
+                if (output.sqrMagnitude > 1) output.Normalize();
 
                 _Move?.Invoke(output);
             }

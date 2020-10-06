@@ -127,7 +127,8 @@ namespace GameSystem
         /// </summary>
         public static void ClientSendPacket(PacketBase pkt)
         {
-            client?.Send(PacketToString(pkt));
+            if (client == null || !client.IsConnected) return;
+            client.Send(PacketToString(pkt));
         }
         public static void ServerBoardcastPacket(PacketBase pkt)
         {

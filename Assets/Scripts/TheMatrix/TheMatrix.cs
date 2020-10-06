@@ -79,6 +79,8 @@ namespace GameSystem
             NetworkSystem.ShutdownClient();
             SceneSystem.LoadScene(GameScene.startMenu);
             yield return 0;
+            InputSystem.ChangeState(new InputSystem.MoveState());
+
 
             ResetGameMessage();
             while (true)

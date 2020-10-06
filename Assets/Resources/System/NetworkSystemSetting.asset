@@ -18,3 +18,5 @@ MonoBehaviour:
   minClientPort: 12306
   maxClientPort: 17851
   udpBoardcastInterval: 1
+  lerpTime: 0.385
+  inputSendInterval: 0.1

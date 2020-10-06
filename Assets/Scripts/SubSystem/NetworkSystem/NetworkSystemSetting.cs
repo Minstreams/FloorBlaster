@@ -23,5 +23,14 @@ namespace GameSystem.Setting
         [MinsHeader("客户端广播配置（寻找服务器）", SummaryType.Header), Space(16)]
         [LabelRange("广播间隔", 0.0001f, 10f)]
         public float udpBoardcastInterval = 1f;
+
+        [MinsHeader("游戏中同步设置", SummaryType.Header), Space(16)]
+        /// <summary>
+        /// 在这个单位时间内完成一次lerp
+        /// </summary>
+        [LabelRange(0.05f, 1)]
+        public float lerpTime = 0.385f;
+        [Label]
+        public float inputSendInterval = 0.1f;
     }
 }
