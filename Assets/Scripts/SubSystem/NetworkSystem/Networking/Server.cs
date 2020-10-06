@@ -224,6 +224,7 @@ namespace GameSystem.Networking
 
                 Log("Destroy");
                 receiveThread?.Abort();
+                NetworkSystem.CallProcessDisconnection(this);
                 stream?.Close();
                 client?.Close();
             }

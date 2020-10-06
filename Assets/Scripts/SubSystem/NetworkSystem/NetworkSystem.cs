@@ -204,10 +204,11 @@ namespace GameSystem
 
         public static event System.Action<UDPPacket> OnUDPReceive;
         public static event System.Action<string> OnReceive;
-        public static event System.Action OnConnected;
-        public static event System.Action OnDisconnected;
+        public static event System.Action OnConnection;
+        public static event System.Action OnDisconnection;
         public static event System.Action<UDPPacket> OnProcessUDPPacket;
         public static event System.Action<string, Server.Connection> OnProcess;
+        public static event System.Action<Server.Connection> OnProcessDisconnection;
 
         #endregion
 
@@ -234,13 +235,13 @@ namespace GameSystem
         {
             pendingReceiveQueue.Enqueue(message);
         }
-        public static void CallConnected()
+        public static void CallConnection()
         {
-            pendingConnected = true;
+            pendingConnection = true;
         }
-        public static void CallDisconnected()
+        public static void CallDisconnection()
         {
-            pendingDisconnected = true;
+            pendingDisconnection = true;
         }
 
         // 服务端
@@ -260,6 +261,10 @@ namespace GameSystem
         public static void CallProcessUDPPacket(UDPPacket packet)
         {
             OnProcessUDPPacket?.Invoke(packet);
+        }
+        public static void CallProcessDisconnection(Server.Connection connection)
+        {
+            OnProcessDisconnection?.Invoke(connection);
         }
 
         #endregion
@@ -287,8 +292,8 @@ namespace GameSystem
         static bool pendingShutdownClient = false;
         static readonly Queue<UDPPacket> pendingUDPReceiveQueue = new Queue<UDPPacket>();
         static readonly Queue<string> pendingReceiveQueue = new Queue<string>();
-        static bool pendingConnected = false;
-        static bool pendingDisconnected = false;
+        static bool pendingConnection = false;
+        static bool pendingDisconnection = false;
         static IEnumerator MainThread()
         {
             while (true)
@@ -328,8 +333,8 @@ namespace GameSystem
                         }
                     }
                 }
-                if (pendingConnected) { pendingConnected = false; TheMatrix.SendGameMessage(GameMessage.Connect); OnConnected?.Invoke(); }
-                if (pendingDisconnected) { pendingDisconnected = false; TheMatrix.SendGameMessage(GameMessage.DisConnect); OnDisconnected?.Invoke(); }
+                if (pendingConnection) { pendingConnection = false; TheMatrix.SendGameMessage(GameMessage.Connect); OnConnection?.Invoke(); }
+                if (pendingDisconnection) { pendingDisconnection = false; TheMatrix.SendGameMessage(GameMessage.DisConnect); OnDisconnection?.Invoke(); }
             }
         }
         #endregion

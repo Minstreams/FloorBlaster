@@ -19,8 +19,8 @@ namespace GameSystem.Operator
         {
             NetworkSystem.OnUDPReceive += val => OnUDPReceive?.Invoke(val.message);
             NetworkSystem.OnReceive += val => OnReceive?.Invoke(val);
-            NetworkSystem.OnConnected += () => OnConnected?.Invoke();
-            NetworkSystem.OnDisconnected += () => OnDisconnected?.Invoke();
+            NetworkSystem.OnConnection += () => OnConnection?.Invoke();
+            NetworkSystem.OnDisconnection += () => OnDisconnection?.Invoke();
         }
 
         //Input
@@ -37,7 +37,7 @@ namespace GameSystem.Operator
         [MinsHeader("Events", SummaryType.Header, 2)]
         public StringEvent OnUDPReceive;
         public StringEvent OnReceive;
-        public SimpleEvent OnConnected;
-        public SimpleEvent OnDisconnected;
+        public SimpleEvent OnConnection;
+        public SimpleEvent OnDisconnection;
     }
 }

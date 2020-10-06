@@ -135,7 +135,7 @@ namespace GameSystem.Networking
         /// </summary>
         public void StopTCPConnecting()
         {
-            if (IsConnected) NetworkSystem.CallDisconnected();
+            if (IsConnected) NetworkSystem.CallDisconnection();
             connectThread?.Abort();
             receiveThread?.Abort();
             stream?.Close();
@@ -250,7 +250,7 @@ namespace GameSystem.Networking
             stream = client.GetStream();
             receiveThread = new Thread(ReceiveThread);
             receiveThread.Start();
-            NetworkSystem.CallConnected();
+            NetworkSystem.CallConnection();
         }
         void ReceiveThread()
         {

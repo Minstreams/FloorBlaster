@@ -22,18 +22,18 @@ namespace GameSystem.Networking
         /// <summary>
         /// 服务器处理消息
         /// </summary>
-        private static Dictionary<string, System.Func<object, object[], object>> tcpProcessors = new Dictionary<string, System.Func<object, object[], object>>();
+        static Dictionary<string, System.Func<object, object[], object>> tcpProcessors = new Dictionary<string, System.Func<object, object[], object>>();
         /// <summary>
         /// 客户端接收消息
         /// </summary>
-        private Dictionary<string, System.Func<object, object[], object>> tcpDistributors = new Dictionary<string, System.Func<object, object[], object>>();
+        Dictionary<string, System.Func<object, object[], object>> tcpDistributors = new Dictionary<string, System.Func<object, object[], object>>();
 
-        private void _TCPProcess(PacketBase packet, Server.Connection connection)
+        void _TCPProcess(PacketBase packet, Server.Connection connection)
         {
             string tp = packet.pktTypeStr;
             if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet, connection });
         }
-        private void _TCPReceive(Pktid packet)
+        void _TCPReceive(Pktid packet)
         {
             string tp = packet.pktTypeStr;
             if (tcpProcessors.ContainsKey(tp)) tcpProcessors[tp]?.Invoke(this, new object[] { packet });
