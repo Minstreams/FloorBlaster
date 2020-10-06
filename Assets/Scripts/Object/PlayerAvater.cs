@@ -28,7 +28,7 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     }
 
     [TCPReceive]
-    void PacketPositionReceive(PkPos packet)
+    void PacketPositionReceive(SiPos packet)
     {
         if (IsServer) return;
         targetPosition = packet.position;
@@ -50,11 +50,11 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
         if (posSyncTimer > Setting.posSyncInterval)
         {
             posSyncTimer = 0;
-            ServerBoardcastPacket(new PkPos(netId, targetPosition));
+            ServerBoardcastPacket(new SiPos(netId, targetPosition));
         }
     }
     [TCPProcess]
-    void PacketInputMoveProcess(PkiMove packet, Server.Connection connection)
+    void PacketInputMoveProcess(IMove packet, Server.Connection connection)
     {
         inputVec = packet.input;
     }

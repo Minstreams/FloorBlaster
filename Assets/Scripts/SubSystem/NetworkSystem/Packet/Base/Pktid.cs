@@ -1,5 +1,6 @@
 ﻿/// <summary>
 /// 发送给指定id的包
+/// 命名前缀：Si
 /// </summary>
 public class Pktid<T> : Pktid
 {

@@ -37,10 +37,10 @@ namespace GameSystem.Operator
         void UDPReceive(UDPPacket packet)
         {
             var pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PkRoomBrief)))
+            if (pkt.MatchType(typeof(URoomBrief)))
             {
                 var ep = packet.endPoint.Address;
-                var roomInfo = pkt as PkRoomBrief;
+                var roomInfo = pkt as URoomBrief;
                 if (roomUIElements.ContainsKey(ep))
                 {
                     roomUIElements[ep].Title = roomInfo.title;
@@ -57,14 +57,14 @@ namespace GameSystem.Operator
                 {
                     // 新建房间时发送定位Echo
                     // 或者不确定自己地址时发送查询Echo
-                    ClientUDPSendPacket(new PkEcho(packet.endPoint.Address), packet.endPoint);
+                    ClientUDPSendPacket(new UEcho(packet.endPoint.Address), packet.endPoint);
                 }
             }
-            else if (pkt.MatchType(typeof(PkEcho)))
+            else if (pkt.MatchType(typeof(UEcho)))
             {
                 // 客户端收到Echo，确定自己的地址
                 if (LocalIPCheck) return;
-                PkEcho pktEcho = pkt as PkEcho;
+                UEcho pktEcho = pkt as UEcho;
                 LocalIPAddress = pktEcho.address;
             }
         }
@@ -72,9 +72,9 @@ namespace GameSystem.Operator
         void UDPPRocess(UDPPacket packet)
         {
             PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PkEcho)))
+            if (pkt.MatchType(typeof(UEcho)))
             {
-                IPAddress addr = (pkt as PkEcho).address;
+                IPAddress addr = (pkt as UEcho).address;
 
                 if (addr.Equals(packet.endPoint.Address) && !NetworkSystem.server.TcpOn)
                 {
@@ -112,7 +112,7 @@ namespace GameSystem.Operator
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PkRoomBrief(RoomManager.currentRoomName));
+                ServerUDPBoardcastPacket(new URoomBrief(RoomManager.currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }

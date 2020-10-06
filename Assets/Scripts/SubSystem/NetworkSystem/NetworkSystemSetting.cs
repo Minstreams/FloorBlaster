@@ -20,9 +20,11 @@ namespace GameSystem.Setting
         [Label]
         public int maxClientPort = 17851;
 
-        [MinsHeader("客户端广播配置（寻找服务器）", SummaryType.Header), Space(16)]
+        [MinsHeader("服务器大厅广播配置", SummaryType.Header), Space(16)]
         [LabelRange("广播间隔", 0.0001f, 10f)]
         public float udpBoardcastInterval = 1f;
+        [Label]
+        public GameObject playerPrefab;
 
         [MinsHeader("游戏中同步设置", SummaryType.Header), Space(16)]
         /// <summary>

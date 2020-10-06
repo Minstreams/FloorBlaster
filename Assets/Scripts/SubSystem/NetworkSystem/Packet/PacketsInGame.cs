@@ -3,10 +3,10 @@
 /// <summary>
 /// Packet Input Move
 /// </summary>
-public class PkiMove : Pkt<PkiMove>
+public class IMove : Pkt<IMove>
 {
     public Vector2 input;
-    public PkiMove(Vector2 input) : base()
+    public IMove(Vector2 input) : base()
     {
         this.input = input;
     }
@@ -15,10 +15,10 @@ public class PkiMove : Pkt<PkiMove>
 /// <summary>
 /// 玩家位置
 /// </summary>
-public class PkPos : Pktid<PkPos>
+public class SiPos : Pktid<SiPos>
 {
     public Vector2 position;
-    public PkPos(string id, Vector2 position) : base(id)
+    public SiPos(string id, Vector2 position) : base(id)
     {
         this.position = position;
     }

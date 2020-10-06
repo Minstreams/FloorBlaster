@@ -41,7 +41,7 @@ namespace GameSystem.Operator
             if (movement != lastMovement && (timer > Setting.inputSendInterval || Vector2.Distance(movement, lastMovement) > Setting.inputSendMoveThreadhold))
             {
                 timer = 0;
-                ClientSendPacket(new PkiMove(movement));
+                ClientSendPacket(new IMove(movement));
                 lastMovement = movement;
             }
         }

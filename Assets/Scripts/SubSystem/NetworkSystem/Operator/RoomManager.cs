@@ -23,33 +23,32 @@ namespace GameSystem.Operator
         {
             if (IsServer)
             {
-                StartCoroutine(BoardcastInfo());
+                StartCoroutine(BoardcastBrief());
             }
         }
 
-        IEnumerator BoardcastInfo()
+        IEnumerator BoardcastBrief()
         {
             while (true)
             {
-                ServerUDPBoardcastPacket(new PkRoomBrief(currentRoomName));
+                ServerUDPBoardcastPacket(new URoomBrief(currentRoomName));
                 yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }
 
+
+
+
+        // 服务器 ---------------------------------------
         [UDPProcess]
         void UDPPRocess(UDPPacket packet)
         {
+            // 服务器处理Echo
             PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(PkEcho)))
+            if (pkt.MatchType(typeof(UEcho)))
             {
-                ServerUDPSendPacket(new PkEcho(packet.endPoint.Address), packet.endPoint);
+                ServerUDPSendPacket(new UEcho(packet.endPoint.Address), packet.endPoint);
             }
-        }
-
-        [TCPConnection]
-        void ConnectionTest()
-        {
-            Debug.Log("Connected!");
         }
     }
 }

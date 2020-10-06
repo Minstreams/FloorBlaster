@@ -2,7 +2,7 @@
 /// <summary>
 /// IP 回声定位器
 /// </summary>
-public class PkEcho : Pkt<PkEcho>
+public class UEcho : Pkt<UEcho>
 {
     public string addressStr;
     public IPAddress address
@@ -10,7 +10,7 @@ public class PkEcho : Pkt<PkEcho>
         get => IPAddress.Parse(addressStr);
         set => addressStr = value.ToString();
     }
-    public PkEcho(IPAddress address) : base()
+    public UEcho(IPAddress address) : base()
     {
         this.address = address;
     }
