@@ -16,6 +16,7 @@ namespace GameSystem
     [DisallowMultipleComponent]
     public class TheMatrix : MonoBehaviour
     {
+        #region 游戏流程 ====================================
         // 场景 -------------------------------------
         /// <summary>
         /// 游戏场景枚举
@@ -29,8 +30,7 @@ namespace GameSystem
             inGame,
         }
 
-        // 游戏流程 ---------------------------------
-        private IEnumerator _Awake()
+        IEnumerator _Awake()
         {
             onGameAwake?.Invoke();
             yield return 0;
@@ -39,7 +39,7 @@ namespace GameSystem
             StartCoroutine(_Logo());
         }
 
-        private IEnumerator _CheckExit()
+        IEnumerator _CheckExit()
         {
             while (true)
             {
@@ -54,7 +54,7 @@ namespace GameSystem
             }
         }
 
-        private IEnumerator _Logo()
+        IEnumerator _Logo()
         {
             SceneSystem.LoadScene(GameScene.logo);
             yield return 0;
@@ -74,7 +74,7 @@ namespace GameSystem
 
 
         // 开始菜单
-        private IEnumerator _StartMenu()
+        IEnumerator _StartMenu()
         {
             NetworkSystem.ShutdownClient();
             SceneSystem.LoadScene(GameScene.startMenu);
@@ -91,7 +91,7 @@ namespace GameSystem
         }
 
         // 联机大厅
-        private IEnumerator _Lobby()
+        IEnumerator _Lobby()
         {
             NetworkSystem.LaunchClient();
             SceneSystem.LoadScene(GameScene.lobby);
@@ -108,7 +108,7 @@ namespace GameSystem
                     StartCoroutine(_StartMenu());
                     break;
                 }
-                if (GetGameMessage(GameMessage.Next))
+                if (GetGameMessage(GameMessage.Connect))
                 {
                     StartCoroutine(_Room());
                     break;
@@ -116,12 +116,10 @@ namespace GameSystem
             }
         }
 
-        private IEnumerator _Room()
+        IEnumerator _Room()
         {
             SceneSystem.LoadScene(GameScene.room);
             yield return 0;
-
-            NetworkSystem.client.StartTCPConnecting();
 
             ResetGameMessage();
             while (true)
@@ -131,7 +129,7 @@ namespace GameSystem
                 {
                     // 回到开始菜单
                     NetworkSystem.ShutdownServer();
-                    StartCoroutine(_StartMenu());
+                    StartCoroutine(_Lobby());
                     break;
                 }
             }
@@ -139,7 +137,7 @@ namespace GameSystem
         }
 
         // 游戏开始
-        private IEnumerator _Start()
+        IEnumerator _Start()
         {
             //SceneSystem.LoadScene(GameScene.startScene);
             InputSystem.ChangeState(new InputSystem.MoveState());
@@ -158,8 +156,7 @@ namespace GameSystem
                 if (GetGameMessage(GameMessage.GameOver)) NetworkSystem.ShutdownClient();
             }
         }
-
-
+        #endregion
 
         #region 应用 & 参数 =================================
         /// <summary>
@@ -168,7 +165,6 @@ namespace GameSystem
         public static TheMatrixSetting Setting { get { return Resources.Load<TheMatrixSetting>("System/TheMatrixSetting"); } }
         public static string GetScene(GameScene gameScene) { return Setting.gameSceneMap[gameScene]; }
 
-        private static TheMatrix instance;
         public static TheMatrix Instance
         {
             get
@@ -187,17 +183,24 @@ namespace GameSystem
                 return instance;
             }
         }
+        static TheMatrix instance;
 
 
         /// <summary>
         /// 游戏初始化委托，在进入游戏第一个场景时调用
         /// </summary>
         public static event System.Action onGameAwake;
+        /// <summary>
+        /// 游戏准备委托，在玩家退出主菜单进入下一步时调用
+        /// </summary>
         public static event System.Action onGameReady;
         /// <summary>
         /// 游戏开始委托，在主场景游戏开始时和游戏重新开始时调用
         /// </summary>
         public static event System.Action onGameStart;
+        /// <summary>
+        /// 游戏退出前调用
+        /// </summary>
         public static event System.Action onQuitting;
 
 #if UNITY_EDITOR
@@ -218,7 +221,7 @@ namespace GameSystem
         /// <summary>
         /// 记录游戏控制信息
         /// </summary>
-        private static bool[] gameMessageReciver = new bool[System.Enum.GetValues(typeof(GameMessage)).Length];
+        static bool[] gameMessageReciver = new bool[System.Enum.GetValues(typeof(GameMessage)).Length];
         /// <summary>
         /// 检查游戏控制信息，收到则返回true
         /// </summary>
@@ -271,7 +274,7 @@ namespace GameSystem
 
         #region 协程控制 ====================================
         //协程控制----------------------------
-        private static Dictionary<System.Type, LinkedList<Coroutine>> routineDictionaty = new Dictionary<System.Type, LinkedList<Coroutine>>();
+        static Dictionary<System.Type, LinkedList<Coroutine>> routineDictionaty = new Dictionary<System.Type, LinkedList<Coroutine>>();
 
         public static LinkedListNode<Coroutine> StartCoroutine(IEnumerator routine, System.Type key)
         {
@@ -309,7 +312,7 @@ namespace GameSystem
             Instance.StopCoroutine(node.Value);
             node.List.Remove(node);
         }
-        private static IEnumerator SubCoroutine(IEnumerator inCoroutine, LinkedListNode<Coroutine> node)
+        static IEnumerator SubCoroutine(IEnumerator inCoroutine, LinkedListNode<Coroutine> node)
         {
             yield return inCoroutine;
             node.List.Remove(node);
@@ -318,7 +321,7 @@ namespace GameSystem
 
         #region 存档控制 ====================================
         //存档控制----------------------------
-        private static void SaveTemporary(SavableObject data)
+        static void SaveTemporary(SavableObject data)
         {
             //此方法将数据保存到内存，但不保存到磁盘
             data.UpdateData();
@@ -385,7 +388,7 @@ namespace GameSystem
             Application.wantsToQuit += beforeQuitting;
             instance = this;
         }
-        private void Start()
+        void Start()
         {
             DontDestroyOnLoad(gameObject);
 #if UNITY_EDITOR
@@ -435,8 +438,8 @@ namespace GameSystem
             }
 #endif
         }
-        private bool canQuit = false;
-        private bool beforeQuitting()
+        bool canQuit = false;
+        bool beforeQuitting()
         {
             SendGameMessage(GameMessage.Exit);
             return canQuit;
@@ -454,6 +457,7 @@ namespace GameSystem
         Exit,
         GameOver,
         GameWin,
+        Connect,
         DisConnect,
     }
 }

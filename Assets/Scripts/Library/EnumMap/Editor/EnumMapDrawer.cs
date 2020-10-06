@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 
 
@@ -13,7 +11,7 @@ public class EnumMapDrawer<ET> : PropertyDrawer
         return Mathf.Max(2, count + 1) * (EditorGUIUtility.singleLineHeight + 14) + 12;
     }
 
-    private SerializedProperty GetList(SerializedProperty property)
+    SerializedProperty GetList(SerializedProperty property)
     {
         var count = System.Enum.GetNames(typeof(ET)).Length;
         var list = property.FindPropertyRelative("list");

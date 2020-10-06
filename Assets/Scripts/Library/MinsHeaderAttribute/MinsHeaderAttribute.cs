@@ -37,7 +37,7 @@ public class MinsHeaderAttribute : PropertyAttribute
         this.Style = getStyle(summaryType);
         this.order = order;
     }
-    private string getStyle(SummaryType summaryType)
+    string getStyle(SummaryType summaryType)
     {
         switch (summaryType)
         {

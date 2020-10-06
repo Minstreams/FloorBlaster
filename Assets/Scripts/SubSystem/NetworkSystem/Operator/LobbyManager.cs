@@ -4,117 +4,137 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using UnityEditor;
 using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Operator
 {
-    namespace Operator
+    /// <summary>
+    /// 大厅的UI控制
+    /// </summary>
+    [AddComponentMenu("[NetworkSystem]/Operator/LobbyManager")]
+    public class LobbyManager : NetworkObject
     {
-        /// <summary>
-        /// 大厅的UI控制
-        /// </summary>
-        [AddComponentMenu("[NetworkSystem]/Operator/LobbyManager")]
-        public class LobbyManager : NetworkObject
-        {
 #if UNITY_EDITOR
-            [MinsHeader("Operator of NetworkSystem", SummaryType.PreTitleOperator, -1)]
-            [MinsHeader("联机大厅管理器", SummaryType.TitleOrange, 0)]
-            [MinsHeader("大厅的UI控制", SummaryType.CommentCenter, 1)]
-            [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
+        [MinsHeader("Operator of NetworkSystem", SummaryType.PreTitleOperator, -1)]
+        [MinsHeader("联机大厅管理器", SummaryType.TitleOrange, 0)]
+        [MinsHeader("大厅的UI控制", SummaryType.CommentCenter, 1)]
+        [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
 #endif
-            private Dictionary<IPAddress, UIRoomInfo> roomUIElements = new Dictionary<IPAddress, UIRoomInfo>();
+        private Dictionary<IPAddress, UIRoomInfo> roomUIElements = new Dictionary<IPAddress, UIRoomInfo>();
+        private bool ipOccupied = false;
 
-            [UDPReceive]
-            private void UDPReceive(UDPPacket packet)
+        private void Start()
+        {
+            NetworkSystem.client.OpenUDP();
+
+        }
+        protected override private void OnDestroy()
+        {
+            NetworkSystem.client.CloseUDP();
+            base.OnDestroy();
+        }
+
+        [UDPReceive]
+        void UDPReceive(UDPPacket packet)
+        {
+            var pkt = StringToPacket(packet.message);
+            if (pkt.MatchType(typeof(PacketRoomInfo)))
             {
-                var pkt = NetworkSystem.StringToPacket(packet.message);
-                if (pkt.MatchType(typeof(PacketRoomInfo)))
+                var ep = packet.endPoint.Address;
+                var roomInfo = pkt as PacketRoomInfo;
+                if (roomUIElements.ContainsKey(ep))
                 {
-                    var ep = packet.endPoint.Address;
-                    var roomInfo = pkt as PacketRoomInfo;
-                    if (roomUIElements.ContainsKey(ep))
-                    {
-                        roomUIElements[ep].Title = roomInfo.roomTitle;
-                    }
-                    else
-                    {
-                        var g = new GameObject(ep.ToString());
-                        g.transform.SetParent(transform);
-                        var el = g.AddComponent<UIRoomInfo>();
-                        el.Title = roomInfo.roomTitle;
-                        roomUIElements.Add(ep, el);
-                    }
-                    // 如果自己ip不确定，就向服务器发送回声检索
-                    if (!NetworkSystem.localIPCheck) NetworkSystem.client.UDPSend(NetworkSystem.PacketToString(new PacketIPEcho(packet.endPoint.Address)), packet.endPoint);
+                    roomUIElements[ep].Title = roomInfo.roomTitle;
                 }
-                else if (pkt.MatchType(typeof(PacketIPEcho)))
+                else
                 {
-                    if (NetworkSystem.isHost)
-                    {
-                        NetworkSystem.ServerIPAddress = NetworkSystem.LocalIPAddress;
-                        TheMatrix.SendGameMessage(GameMessage.Next);
-                    }
+                    var g = new GameObject(ep.ToString());
+                    g.transform.SetParent(transform);
+                    var el = g.AddComponent<UIRoomInfo>();
+                    el.Title = roomInfo.roomTitle;
+                    roomUIElements.Add(ep, el);
+                }
+                if ((IsServer && !IsConnected) || !LocalIPCheck)
+                {
+                    // 新建房间时发送定位Echo
+                    // 或者不确定自己地址时发送查询Echo
+                    ClientUDPSendPacket(new PacketIPEcho(packet.endPoint.Address), packet.endPoint);
                 }
             }
-
-            private void Start()
+            else if (pkt.MatchType(typeof(PacketIPEcho)))
             {
-                NetworkSystem.client.OpenUDP();
-
+                // 客户端收到Echo，确定自己的地址
+                if (LocalIPCheck) return;
+                PacketIPEcho pktEcho = pkt as PacketIPEcho;
+                LocalIPAddress = pktEcho.address;
             }
-            protected override void OnDestroy()
+        }
+        [UDPProcess]
+        void UDPPRocess(UDPPacket packet)
+        {
+            PacketBase pkt = StringToPacket(packet.message);
+            if (pkt.MatchType(typeof(PacketIPEcho)))
             {
-                base.OnDestroy();
-                NetworkSystem.client.CloseUDP();
-            }
+                IPAddress addr = (pkt as PacketIPEcho).address;
 
-            //Server========================================
-            private bool ipOccupied = false;
-            [ContextMenu("LaunchServer")]
-            public void LaunchServer()
-            {
-                try
+                if (addr.Equals(packet.endPoint.Address) && !NetworkSystem.server.TcpOn)
                 {
-                    NetworkSystem.LaunchServer();
-                    RoomManager.currentRoomName = "默认房间名";
-                    StartCoroutine(BoardcastInfo());
-                }
-                catch (SocketException ex)
-                {
-                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
-                    {
-                        NetworkSystem.ShutdownServer();
-                        ipOccupied = true;
-                    }
+                    // 是本地发来的，打开tcp监听，并进入本地房间
+                    LocalIPAddress = addr;
+                    NetworkSystem.server.TurnOnTCP();
+                    NetworkSystem.ConnectTo(addr);
                 }
             }
+        }
 
-            private IEnumerator BoardcastInfo()
+
+        /// <summary>
+        /// 作为主机开房间
+        /// </summary>
+        [ContextMenu("LaunchServer")]
+        public void LaunchServer()
+        {
+            try
             {
-                while (true)
+                NetworkSystem.LaunchServer();
+                RoomManager.currentRoomName = "默认房间名";
+                StartCoroutine(BoardcastInfo());
+            }
+            catch (SocketException ex)
+            {
+                if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
                 {
-                    NetworkSystem.server.UDPBoardcast(NetworkSystem.PacketToString(new PacketRoomInfo(RoomManager.currentRoomName)));
-                    yield return new WaitForSeconds(NetworkSystem.Setting.udpBoardcastInterval);
+                    NetworkSystem.ShutdownServer();
+                    ipOccupied = true;
                 }
             }
-
-            private void OnGUI()
+        }
+        IEnumerator BoardcastInfo()
+        {
+            while (true)
             {
-                if (ipOccupied)
-                {
-                    GUILayout.Button("相同地址已经存在一个服务器~");
-                }
-                else if (GUILayout.Button("创建房间"))
-                {
-                    LaunchServer();
-                }
+                ServerUDPBoardcastPacket(new PacketRoomInfo(RoomManager.currentRoomName));
+                yield return new WaitForSeconds(Setting.udpBoardcastInterval);
+            }
+        }
+
+        void OnGUI()
+        {
+            if (ipOccupied)
+            {
+                GUILayout.Button("相同地址已经存在一个服务器~");
+            }
+            else if (GUILayout.Button("创建房间"))
+            {
+                LaunchServer();
+            }
+            if (LocalIPCheck)
+            {
                 foreach (var ro in roomUIElements)
                 {
                     if (GUILayout.Button(ro.Value.Title))
                     {
-                        NetworkSystem.ServerIPAddress = ro.Key;
-                        TheMatrix.SendGameMessage(GameMessage.Next);
+                        NetworkSystem.ConnectTo(ro.Key);
                     }
                 }
             }

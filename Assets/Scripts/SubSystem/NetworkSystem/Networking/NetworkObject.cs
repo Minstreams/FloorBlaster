@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System.Reflection;
+﻿using System.Reflection;
 using GameSystem.Networking.Packet;
 
 namespace GameSystem.Networking
@@ -7,14 +6,14 @@ namespace GameSystem.Networking
     /// <summary>
     /// 一般网络物体，有网络通信功能
     /// </summary>
-    public class NetworkObject : MonoBehaviour
+    public abstract class NetworkObject : NetworkBaseBehaviour
     {
         event System.Action onDestroyEvent;
-        protected virtual void OnDestroy()
+        protected virtual private void OnDestroy()
         {
             onDestroyEvent?.Invoke();
         }
-        protected virtual void Awake()
+        protected virtual private void Awake()
         {
             var ms = this.GetType().GetRuntimeMethods();
             //Debug.Log("Start Processing. Type:" + this.GetType().FullName);

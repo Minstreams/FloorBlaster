@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using GameSystem;
 using System.IO;
-using UnityEngine.WSA;
 
 public class GameEditorExtension : EditorWindow
 {
@@ -85,23 +82,18 @@ public class GameEditorExtension : EditorWindow
         //Setting-------------------------------
         var fSetting = File.CreateText("Assets/Scripts/SubSystem/" + name + "/" + name + "Setting.cs");
         fSetting.Write(
-@"using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+@"using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Setting
 {
-    namespace Setting
+    [CreateAssetMenu(fileName = " + "\"" + name + "Setting\", menuName = \"系统配置文件/" + name + "Setting\"" + @")]
+    public class " + name + @"Setting : ScriptableObject
     {
-        [CreateAssetMenu(fileName = " + "\"" + name + "Setting\", menuName = \"系统配置文件/" + name + "Setting\"" + @")]
-        public class " + name + @"Setting : ScriptableObject
-        {
-            //[MinsHeader(" + "\"" + name + " Setting\", SummaryType.Title, -2)]" + @"
-            //[MinsHeader(" + "\"" + comment + "\", SummaryType.CommentCenter, -1)]" + @"
+        //[MinsHeader(" + "\"" + name + " Setting\", SummaryType.Title, -2)]" + @"
+        //[MinsHeader(" + "\"" + comment + "\", SummaryType.CommentCenter, -1)]" + @"
 
-            //[MinsHeader(" + "\"Data\", SummaryType.Header), Space(16)]" + @"
+        //[MinsHeader(" + "\"Data\", SummaryType.Header), Space(16)]" + @"
 
-        }
     }
 }");
         fSetting.Close();
@@ -124,17 +116,17 @@ namespace GameSystem
 
 
         [RuntimeInitializeOnLoadMethod]
-        private static void RuntimeInit()
+        static void RuntimeInit()
         {
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
             TheMatrix.onGameStart += OnGameStart;
         }
-        private static void OnGameAwake()
+        static void OnGameAwake()
         {
             //在进入游戏第一个场景时调用
         }
-        private static void OnGameStart()
+        static void OnGameStart()
         {
             //在主场景游戏开始时和游戏重新开始时调用
         }
@@ -169,13 +161,13 @@ namespace GameSystem
         Selection.selectionChanged += _CreateSettingAsset;
         NavToSystemConfig();
     }
-    private void _CreateSettingAsset()
+    void _CreateSettingAsset()
     {
         Selection.selectionChanged -= _CreateSettingAsset;
         EditorApplication.ExecuteMenuItem("Assets/Create/系统配置文件/" + subSystemName + "Setting");
         EditorUtility.DisplayDialog("Minstreams工具箱", subSystemName + "  Setting Asset created!", "Cool~");
     }
-    private void ScanSubSystem()
+    void ScanSubSystem()
     {
         subSystemSettings = AssetDatabase.FindAssets("SystemSetting t:ScriptableObject");
         for (int i = 0; i < subSystemSettings.Length; ++i)
@@ -210,39 +202,36 @@ namespace GameSystem
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Linker
 {
-    namespace Linker
+    " + (string.IsNullOrEmpty(comment) ? "" : (
+    @"/// <summary>
+    /// " + comment + @"
+    /// </summary>")) + @"
+    [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Linker/" + name + "\"" + @")]
+    public class " + name + @" : MonoBehaviour
     {
-        " + (string.IsNullOrEmpty(comment) ? "" : (
-        @"/// <summary>
-        /// " + comment + @"
-        /// </summary>")) + @"
-        [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Linker/" + name + "\"" + @")]
-        public class " + name + @" : MonoBehaviour
-        {
 #if UNITY_EDITOR" + (isOfSubSys ? @"
-            [MinsHeader(" + "\"Linker of " + subSystemName + "\", SummaryType.PreTitleLinker, -1)]" : "") + @"
-            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Blue" : "Cyan") + @", 0)]
-            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
-            [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
+        [MinsHeader(" + "\"Linker of " + subSystemName + "\", SummaryType.PreTitleLinker, -1)]" : "") + @"
+        [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Blue" : "Cyan") + @", 0)]
+        [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+        [ConditionalShow, SerializeField] bool useless; //在没有数据的时候让标题正常显示
 #endif
 
-            //Data
-            [MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
+        //Data
+        [MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
 
-            //Inner code here
+        //Inner code here
 
-            //Output
-            [MinsHeader(" + "\"Output\"" + @", SummaryType.Header, 3)]
-            public SimpleEvent output;
+        //Output
+        [MinsHeader(" + "\"Output\"" + @", SummaryType.Header, 3)]
+        public SimpleEvent output;
 
-            //Input
-            [ContextMenu(" + "\"Invoke\"" + @")]
-            public void Invoke()
-            {
-                output?.Invoke();
-            }
+        //Input
+        [ContextMenu(" + "\"Invoke\"" + @")]
+        public void Invoke()
+        {
+            output?.Invoke();
         }
     }
 }");
@@ -277,33 +266,30 @@ namespace GameSystem
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Operator
 {
-    namespace Operator
+    " + (string.IsNullOrEmpty(comment) ? "" : (
+    @"/// <summary>
+    /// " + comment + @"
+    /// </summary>")) + @"
+    [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Operator/" + name + "\"" + @")]
+    public class " + name + @" : MonoBehaviour
     {
-        " + (string.IsNullOrEmpty(comment) ? "" : (
-        @"/// <summary>
-        /// " + comment + @"
-        /// </summary>")) + @"
-        [AddComponentMenu(" + "\"" + (isOfSubSys ? ("[" + subSystemName + "]/") : "|") + "Operator/" + name + "\"" + @")]
-        public class " + name + @" : MonoBehaviour
-        {
 #if UNITY_EDITOR" + (isOfSubSys ? @"
-            [MinsHeader(" + "\"Operator of " + subSystemName + "\", SummaryType.PreTitleOperator, -1)]" : "") + @"
-            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Orange" : "Yellow") + @", 0)]
-            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
-            [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
+        [MinsHeader(" + "\"Operator of " + subSystemName + "\", SummaryType.PreTitleOperator, -1)]" : "") + @"
+        [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.Title" + (isOfSubSys ? "Orange" : "Yellow") + @", 0)]
+        [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+        [ConditionalShow, SerializeField] bool useless; //在没有数据的时候让标题正常显示
 #endif
 
-            //Data
-            //[MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
+        //Data
+        //[MinsHeader(" + "\"Data\"" + @", SummaryType.Header, 2)]
 
-            //Inner code here
+        //Inner code here
 
-            //Input
-            //[ContextMenu(" + "\"SomeFuntion\"" + @")]
-            //public void SomeFuntion(){}
-        }
+        //Input
+        //[ContextMenu(" + "\"SomeFuntion\"" + @")]
+        //public void SomeFuntion(){}
     }
 }");
         f.Close();
@@ -333,40 +319,35 @@ namespace GameSystem
         }
         var f = File.CreateText("Assets/Scripts/" + (isOfSubSys ? ("SubSystem/" + subSystemName + "/") : "") + "Savable/" + name + ".cs");
         f.Write(
-@"using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+@"using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Savable
 {
-    namespace Savable
-    {
-        " + (string.IsNullOrEmpty(comment) ? "" : (
-        @"/// <summary>
-        /// " + comment + @"
-        /// </summary>")) + @"
-        [CreateAssetMenu(fileName = " + "\"" + name + "\", menuName = \"Savable/" + name + "\"" + @")]
-        public class " + name + @" : SavableObject
-        {" + (isOfSubSys ? @"
-            [MinsHeader(" + "\"SavableObject of " + subSystemName + "\", SummaryType.PreTitleSavable, -1)]" : "") + @"
-            [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.TitleGreen, 0)]
-            [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
+    " + (string.IsNullOrEmpty(comment) ? "" : (
+    @"/// <summary>
+    /// " + comment + @"
+    /// </summary>")) + @"
+    [CreateAssetMenu(fileName = " + "\"" + name + "\", menuName = \"Savable/" + name + "\"" + @")]
+    public class " + name + @" : SavableObject
+    {" + (isOfSubSys ? @"
+        [MinsHeader(" + "\"SavableObject of " + subSystemName + "\", SummaryType.PreTitleSavable, -1)]" : "") + @"
+        [MinsHeader(" + "\"" + title + "\"" + @", SummaryType.TitleGreen, 0)]
+        [MinsHeader(" + "\"" + comment + "\"" + @", SummaryType.CommentCenter, 1)]
 
-            //Your Data here
-            [Label]
-            public float data1;
+        //Your Data here
+        [Label]
+        public float data1;
 
-            //APPLY the data to game
-            public override void ApplyData()
-            {
-                //apply(data1);
-            }
+        //APPLY the data to game
+        public override void ApplyData()
+        {
+            //apply(data1);
+        }
 
-            //Collect and UPDATE data
-            public override void UpdateData()
-            {
-                //data1 = ...
-            }
+        //Collect and UPDATE data
+        public override void UpdateData()
+        {
+            //data1 = ...
         }
     }
 }");
@@ -376,8 +357,8 @@ namespace GameSystem
 
     }
 
-    private static System.Text.RegularExpressions.Regex wordReg = new System.Text.RegularExpressions.Regex("^\\w+$");
-    private string[] subSystemSettings = null;
+    static System.Text.RegularExpressions.Regex wordReg = new System.Text.RegularExpressions.Regex("^\\w+$");
+    string[] subSystemSettings = null;
     public enum EditorMode
     {
         SubSystem,
@@ -385,20 +366,20 @@ namespace GameSystem
         Operator,
         Savable
     }
-    private EditorMode editorMode;
-    private string subSystemName = "";
-    private string subSystemComment = "";
-    private string linkerName = "";
-    private string linkerTitle = "";
-    private string linkerComment = "";
-    private string operatorName = "";
-    private string operatorTitle = "";
-    private string operatorComment = "";
-    private string savableName = "";
-    private string savableTitle = "";
-    private string savableComment = "";
-    private GUIStyle headerStyle;
-    private GUIStyle HeaderStyle
+    EditorMode editorMode;
+    string subSystemName = "";
+    string subSystemComment = "";
+    string linkerName = "";
+    string linkerTitle = "";
+    string linkerComment = "";
+    string operatorName = "";
+    string operatorTitle = "";
+    string operatorComment = "";
+    string savableName = "";
+    string savableTitle = "";
+    string savableComment = "";
+    GUIStyle headerStyle;
+    GUIStyle HeaderStyle
     {
         get
         {
@@ -413,8 +394,8 @@ namespace GameSystem
             return headerStyle;
         }
     }
-    private GUIStyle btnStyle;
-    private GUIStyle BtnStyle
+    GUIStyle btnStyle;
+    GUIStyle BtnStyle
     {
         get
         {
@@ -428,8 +409,8 @@ namespace GameSystem
             return btnStyle;
         }
     }
-    private GUIStyle labelStyle;
-    private GUIStyle LabelStyle
+    GUIStyle labelStyle;
+    GUIStyle LabelStyle
     {
         get
         {
@@ -442,8 +423,8 @@ namespace GameSystem
             return labelStyle;
         }
     }
-    private GUIStyle tabBGStyle;
-    private GUIStyle TabBGStyle
+    GUIStyle tabBGStyle;
+    GUIStyle TabBGStyle
     {
         get
         {
@@ -455,8 +436,8 @@ namespace GameSystem
             return tabBGStyle;
         }
     }
-    private GUIStyle tabStyle;
-    private GUIStyle TabStyle
+    GUIStyle tabStyle;
+    GUIStyle TabStyle
     {
         get
         {
@@ -474,8 +455,8 @@ namespace GameSystem
             return tabStyle;
         }
     }
-    private GUIStyle tabLabelStyle;
-    private GUIStyle TabLabelStyle
+    GUIStyle tabLabelStyle;
+    GUIStyle TabLabelStyle
     {
         get
         {
@@ -495,16 +476,16 @@ namespace GameSystem
     /// <summary>
     /// 分隔符
     /// </summary>
-    private void Separator()
+    void Separator()
     {
         GUILayout.Label("", "RL DragHandle", GUILayout.ExpandWidth(true));
     }
-    private void SectionHeader(string title)
+    void SectionHeader(string title)
     {
         Separator();
         GUILayout.Label(title, HeaderStyle, GUILayout.ExpandWidth(true));
     }
-    private string TextArea(string name, string target, int maxLength = 24)
+    string TextArea(string name, string target, int maxLength = 24)
     {
         string result;
         GUILayout.BeginHorizontal();
@@ -515,20 +496,20 @@ namespace GameSystem
         GUILayout.EndHorizontal();
         return result;
     }
-    private void Label(string text)
+    void Label(string text)
     {
         GUILayout.Label(text, LabelStyle);
     }
 
 
 
-    private void OnEnable()
+    void OnEnable()
     {
         ScanSubSystem();
         Input.imeCompositionMode = IMECompositionMode.On;
     }
 
-    private void OnGUI()
+    void OnGUI()
     {
         GUILayout.BeginVertical("GameViewBackground", GUILayout.ExpandHeight(true));
         SectionHeader("数据导航");

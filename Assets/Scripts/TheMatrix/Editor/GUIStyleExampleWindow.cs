@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 public sealed class GUIStyleExampleWindow : EditorWindow
 {
-    private readonly string[] dList =
+    readonly string[] dList =
     {
         "box",
         "button",
@@ -28,8 +27,8 @@ public sealed class GUIStyleExampleWindow : EditorWindow
         "verticalSlider",
         "verticalSliderThumb"
     };
-    private GUIStyle[] sList = null;
-    private int length = 0;
+    GUIStyle[] sList = null;
+    int length = 0;
     public bool inGameSkin = false;
     public void Init()
     {
@@ -38,10 +37,10 @@ public sealed class GUIStyleExampleWindow : EditorWindow
         length = dList.Length + sList.Length;
     }
 
-    private Vector2 mScrollPos;
+    Vector2 mScrollPos;
 
     [MenuItem("MatrixTool/GUIStyle 样例窗口")]
-    private static void Example()
+    static void Example()
     {
         var w = GetWindow<GUIStyleExampleWindow>();
         w.wantsMouseEnterLeaveWindow = false;
@@ -52,7 +51,7 @@ public sealed class GUIStyleExampleWindow : EditorWindow
         w.Init();
     }
     [MenuItem("MatrixTool/GUIStyle 样例窗口 - InGameSkin")]
-    private static void Example_InGameSkin()
+    static void Example_InGameSkin()
     {
         var w = GetWindow<GUIStyleExampleWindow>();
         w.wantsMouseEnterLeaveWindow = false;
@@ -63,12 +62,12 @@ public sealed class GUIStyleExampleWindow : EditorWindow
         w.Init();
     }
 
-    private int page = 0;
-    private int itemsPerPage = 30;
-    private string text = "Test测试";
-    private bool expandWidth = false;
-    private bool isButton = false;
-    private void OnGUI()
+    int page = 0;
+    int itemsPerPage = 30;
+    string text = "Test测试";
+    bool expandWidth = false;
+    bool isButton = false;
+    void OnGUI()
     {
         mScrollPos = EditorGUILayout.BeginScrollView(mScrollPos);
         for (int i = page * itemsPerPage; i < length && i < (page + 1) * itemsPerPage; ++i)

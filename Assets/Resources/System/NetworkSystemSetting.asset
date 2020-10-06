@@ -17,6 +17,4 @@ MonoBehaviour:
   clientUDPPort: 7856
   minClientPort: 12306
   maxClientPort: 17851
-  serverIP: 127.0.0.1
-  localIP: 127.0.0.1
-  udpBoardcastInterval: 3.26
+  udpBoardcastInterval: 1

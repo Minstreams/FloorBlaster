@@ -4,10 +4,10 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(MinsHeaderAttribute))]
 public class MinsHeaderDrawer : DecoratorDrawer
 {
-    private MinsHeaderAttribute sa { get { return attribute as MinsHeaderAttribute; } }
-    private GUIStyle style = null;
-    private float width = 512;
-    private GUIStyle Style
+    MinsHeaderAttribute sa { get { return attribute as MinsHeaderAttribute; } }
+    float width = 512;
+    GUIStyle style = null;
+    GUIStyle Style
     {
         get
         {
@@ -25,7 +25,7 @@ public class MinsHeaderDrawer : DecoratorDrawer
                 {
                     style.wordWrap = true;
                 }
-                
+
             }
             return style;
         }

@@ -9,14 +9,8 @@ namespace GameSystem.Networking.Packet
         public string addressStr;
         public IPAddress address
         {
-            get
-            {
-                return IPAddress.Parse(addressStr);
-            }
-            set
-            {
-                addressStr = value.ToString();
-            }
+            get => IPAddress.Parse(addressStr);
+            set => addressStr = value.ToString();
         }
         public PacketIPEcho(IPAddress address) : base()
         {

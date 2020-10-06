@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using GameSystem.Setting;
 
@@ -49,7 +48,7 @@ namespace GameSystem
         /// <summary>
         /// 通用输入逻辑
         /// </summary>
-        private static void GeneralLogic()
+        static void GeneralLogic()
         {
             if (Input.anyKey) _Any?.Invoke();
             if (Input.anyKeyDown) _AnyDown?.Invoke();
@@ -93,12 +92,12 @@ namespace GameSystem
             public virtual void OnExit() { }
         }
 
-        private static InputState currentState;
-        private class DefaultInputState : InputState
+        static InputState currentState;
+        class DefaultInputState : InputState
         {
             public override void Execute() { }
         }
-        private static IEnumerator StateMachineProcess()
+        static IEnumerator StateMachineProcess()
         {
             Debug.Log("Input State Machine Launched!");
             currentState = new DefaultInputState();
@@ -150,12 +149,12 @@ namespace GameSystem
 
         #region 流程 ============================================
         [UnityEngine.RuntimeInitializeOnLoadMethod]
-        private static void RuntimeInit()
+        static void RuntimeInit()
         {
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
         }
-        private static void OnGameAwake()
+        static void OnGameAwake()
         {
             //在进入游戏第一个场景时调用
             StartCoroutine(StateMachineProcess());

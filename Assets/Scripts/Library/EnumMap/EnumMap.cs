@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 
@@ -17,13 +16,7 @@ public class EnumMap<ET, DT> where ET : System.Enum
 
     public DT this[ET key]
     {
-        get
-        {
-            return this.list[(int)(object)key];
-        }
-        set
-        {
-            this.list[(int)(object)key] = value;
-        }
+        get => this.list[(int)(object)key];
+        set => this.list[(int)(object)key] = value;
     }
 }

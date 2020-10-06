@@ -1,36 +1,31 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace GameSystem
+namespace GameSystem.Linker
 {
-    namespace Linker
+    [AddComponentMenu("|Linker/SimpleLinker")]
+    public class SimpleLinker : MonoBehaviour
     {
-        [AddComponentMenu("|Linker/SimpleLinker")]
-        public class SimpleLinker : MonoBehaviour
+        [MinsHeader("Simple Linker", SummaryType.TitleCyan, 0)]
+
+        //Data
+        [MinsHeader("Data", SummaryType.Header, 2)]
+        [Label(true)]
+        public bool invokeOnStart;
+
+        private void Start()
         {
-            [MinsHeader("Simple Linker", SummaryType.TitleCyan, 0)]
+            if (invokeOnStart) Invoke();
+        }
 
-            //Data
-            [MinsHeader("Data", SummaryType.Header, 2)]
-            [Label(true)]
-            public bool invokeOnStart;
+        //Output
+        [MinsHeader("Output", SummaryType.Header, 3)]
+        public SimpleEvent output;
 
-            private void Start()
-            {
-                if (invokeOnStart) Invoke();
-            }
-
-            //Output
-            [MinsHeader("Output", SummaryType.Header, 3)]
-            public SimpleEvent output;
-
-            //Input
-            [ContextMenu("Invoke")]
-            public void Invoke()
-            {
-                output?.Invoke();
-            }
+        //Input
+        [ContextMenu("Invoke")]
+        public void Invoke()
+        {
+            output?.Invoke();
         }
     }
 }

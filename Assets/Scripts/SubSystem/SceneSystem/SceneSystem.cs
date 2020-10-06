@@ -14,12 +14,12 @@ namespace GameSystem
         /// <summary>
         /// 场景栈
         /// </summary>
-        private static Stack<string> sceneStack = new Stack<string>();
+        static Stack<string> sceneStack = new Stack<string>();
         /// <summary>
         /// 场景加载进度事件，用于在加载场景中播放进度加载效果
         /// </summary>
         public static event System.Action<float> InLoadingProgress;
-        private static AsyncOperation progress;
+        static AsyncOperation progress;
         /// <summary>
         /// 场景加载结束事件，用于退出加载效果并延迟一段时间，返回延迟秒数
         /// </summary>
@@ -33,7 +33,7 @@ namespace GameSystem
         /// <summary>
         /// 获取委托列表最大返回值，为空则返回0
         /// </summary>
-        private static float GetMaxReturn(System.Func<float> func)
+        static float GetMaxReturn(System.Func<float> func)
         {
             if (func == null) return 0;
             System.Delegate[] list = func.GetInvocationList();
@@ -48,7 +48,7 @@ namespace GameSystem
 
             return max;
         }
-        private static IEnumerator YieldPushScene(string sceneName, bool loadLoadingScene)
+        static IEnumerator YieldPushScene(string sceneName, bool loadLoadingScene)
         {
             //加载新场景
             progress = SceneManager.LoadSceneAsync(sceneName, sceneStack.Count == 0 ? LoadSceneMode.Single : LoadSceneMode.Additive);
@@ -73,14 +73,14 @@ namespace GameSystem
 
             sceneStack.Push(sceneName);
         }
-        private static IEnumerator YieldPopScene(float delay)
+        static IEnumerator YieldPopScene(float delay)
         {
             yield return new WaitForSeconds(delay);
             string toPop = sceneStack.Pop();
             if (sceneStack.Count > 0)
                 SceneManager.UnloadSceneAsync(toPop);
         }
-        private static IEnumerator YieldPopAndPushScene(float delay, string sceneName, bool loadLoadingScene)
+        static IEnumerator YieldPopAndPushScene(float delay, string sceneName, bool loadLoadingScene)
         {
             yield return YieldPopScene(delay);
             yield return YieldPushScene(sceneName, loadLoadingScene);
@@ -140,7 +140,7 @@ namespace GameSystem
         }
 
         //[RuntimeInitializeOnLoadMethod]
-        //private static void RuntimeInit()
+        //static void RuntimeInit()
         //{
         //    //用于控制Action初始化
         //}

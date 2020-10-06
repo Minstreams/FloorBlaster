@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace GameSystem.Setting
@@ -21,10 +19,6 @@ namespace GameSystem.Setting
         public int minClientPort = 12306;
         [Label]
         public int maxClientPort = 17851;
-        [Label]
-        public string serverIP = "127.0.0.1";
-        [Label]
-        public string localIP = "127.0.0.1";
 
         [MinsHeader("客户端广播配置（寻找服务器）", SummaryType.Header), Space(16)]
         [LabelRange("广播间隔", 0.0001f, 10f)]

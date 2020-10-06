@@ -1,16 +1,13 @@
 ﻿using System;
 
-namespace GameSystem
+namespace GameSystem.Networking
 {
-    namespace Networking
+    /// <summary>
+    /// 服务器端处理UDP消息
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    class UDPProcessAttribute : Attribute
     {
-        /// <summary>
-        /// 服务器端处理UDP消息
-        /// </summary>
-        [AttributeUsage(AttributeTargets.Method)]
-        class UDPProcessAttribute : Attribute
-        {
 
-        }
     }
 }

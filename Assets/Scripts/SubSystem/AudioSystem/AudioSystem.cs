@@ -13,8 +13,8 @@ namespace GameSystem
         /// <summary>
         /// 背景音乐音源
         /// </summary>
-        private static AudioSource musicSource;
-        private static GameObject audioObject { get { return TheMatrix.Instance.gameObject; } }
+        static AudioSource musicSource;
+        static GameObject audioObject { get { return TheMatrix.Instance.gameObject; } }
 
         /// <summary>
         /// 配置音源效果的结构体
@@ -62,15 +62,15 @@ namespace GameSystem
         /// <summary>
         /// 延迟执行
         /// </summary>
-        private static void DelayAction(float delay, System.Action action) { StartCoroutine(_DelayAction(delay, action)); }
-        private static IEnumerator _DelayAction(float delay, System.Action action)
+        static void DelayAction(float delay, System.Action action) { StartCoroutine(_DelayAction(delay, action)); }
+        static IEnumerator _DelayAction(float delay, System.Action action)
         {
             yield return new WaitForSeconds(delay);
             action();
         }
 
-        private static List<AudioSource> soundsPlaying = new List<AudioSource>();
-        private static List<AudioSource> soundsLooping = new List<AudioSource>();
+        static List<AudioSource> soundsPlaying = new List<AudioSource>();
+        static List<AudioSource> soundsLooping = new List<AudioSource>();
 
 
         //API---------------------------------
@@ -136,19 +136,19 @@ namespace GameSystem
 
 
         [RuntimeInitializeOnLoadMethod]
-        private static void RuntimeInit()
+        static void RuntimeInit()
         {
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
             TheMatrix.onGameStart += OnGameStart;
         }
-        private static void OnGameAwake()
+        static void OnGameAwake()
         {
             //在进入游戏第一个场景时调用
             musicSource = audioObject.AddComponent<AudioSource>();
             musicSource.outputAudioMixerGroup = Setting.musicGroup;
         }
-        private static void OnGameStart()
+        static void OnGameStart()
         {
             //在主场景游戏开始时和游戏重新开始时调用
         }
