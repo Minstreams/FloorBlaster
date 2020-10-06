@@ -14,10 +14,16 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
 
     // 本地处理 ==========================================
     public Vector3 targetPosition;
+    float lerpRate = 1;
 
-    private void Update()
+    private void Start()
     {
-        transform.position = Vector3.Lerp(targetPosition, transform.position, Mathf.Pow(0.001f, Time.deltaTime / Setting.lerpTime));
+        lerpRate = 1 - Mathf.Pow(0.001f, Time.fixedDeltaTime / Setting.lerpTime);
+    }
+
+    private void FixedUpdate()
+    {
+        transform.position = Vector3.Lerp(transform.position, targetPosition, lerpRate);
         if (IsServer) ServerUpdate();
     }
 
@@ -36,11 +42,11 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
     float posSyncTimer = 0;
     void ServerUpdate()
     {
-        inputLerped = Vector2.Lerp(inputVec, inputLerped, Mathf.Pow(0.001f, Time.deltaTime / Setting.lerpTime));
+        inputLerped = Vector2.Lerp(inputLerped, inputVec, Mathf.Pow(0.001f, Time.deltaTime / Setting.lerpTime));
         targetPosition.x += inputLerped.x * Time.deltaTime * info.speed;
         targetPosition.z += inputLerped.y * Time.deltaTime * info.speed;
 
-        posSyncTimer += Time.deltaTime;
+        posSyncTimer += Time.fixedDeltaTime;
         if (posSyncTimer > Setting.posSyncInterval)
         {
             posSyncTimer = 0;
