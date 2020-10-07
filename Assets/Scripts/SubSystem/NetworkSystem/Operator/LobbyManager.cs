@@ -25,7 +25,8 @@ namespace GameSystem.Operator
         private void Start()
         {
             NetworkSystem.client.OpenUDP();
-
+            ClientUDPSendPacket(new UIp(), new IPEndPoint(IPAddress.Broadcast, Setting.clientUDPPort));
+            RefreshServerList();
         }
         protected override private void OnDestroy()
         {
@@ -33,15 +34,40 @@ namespace GameSystem.Operator
             base.OnDestroy();
         }
 
+        public void RefreshServerList()
+        {
+            ClientUDPSendPacket(new HReqList(), NetworkSystem.HelperEndPoint);
+        }
+
         [UDPReceive]
         void UDPReceive(UDPPacket packet)
         {
             var pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(URoomBrief)))
+            if (pkt.MatchType(typeof(UIp)))
             {
+                // 客户端收到UIp,发回地址
+                ClientUDPSendPacket(new UEcho(packet.endPoint.Address), packet.endPoint);
+            }
+            else if (pkt.MatchType(typeof(UEcho)))
+            {
+                // 客户端收到Echo，确定自己的地址
+                UEcho pktEcho = pkt as UEcho;
+                LocalIPAddress = pktEcho.address;
+            }
+            else if (pkt.MatchType(typeof(HServerList)))
+            {
+                // 刷新服务器表列
+                var sList = pkt as HServerList;
+                foreach (string sip in sList.sList)
+                {
+                    ClientUDPSendPacket(new UHello(), new IPEndPoint(IPAddress.Parse(sip), Setting.serverUDPPort));
+                }
+            }
+            else if (pkt.MatchType(typeof(URoomBrief)))
+            {
+                // 更新服务器UI
                 var ep = packet.endPoint.Address;
                 var roomInfo = pkt as URoomBrief;
-                if (roomInfo.hello != NetworkSystem.clientHello) return;    //版本不一致
                 if (roomUIElements.ContainsKey(ep))
                 {
                     roomUIElements[ep].Title = roomInfo.title;
@@ -54,39 +80,8 @@ namespace GameSystem.Operator
                     el.Title = roomInfo.title;
                     roomUIElements.Add(ep, el);
                 }
-                if ((IsServer && !IsConnected) || !LocalIPCheck)
-                {
-                    // 新建房间时发送定位Echo
-                    // 或者不确定自己地址时发送查询Echo
-                    ClientUDPSendPacket(new UEcho(packet.endPoint.Address), packet.endPoint);
-                }
-            }
-            else if (pkt.MatchType(typeof(UEcho)))
-            {
-                // 客户端收到Echo，确定自己的地址
-                if (LocalIPCheck) return;
-                UEcho pktEcho = pkt as UEcho;
-                LocalIPAddress = pktEcho.address;
             }
         }
-        [UDPProcess]
-        void UDPPRocess(UDPPacket packet)
-        {
-            PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(UEcho)))
-            {
-                IPAddress addr = (pkt as UEcho).address;
-
-                if (addr.Equals(packet.endPoint.Address) && !NetworkSystem.server.TcpOn)
-                {
-                    // 是本地发来的，打开tcp监听，并进入本地房间
-                    LocalIPAddress = addr;
-                    NetworkSystem.server.TurnOnTCP();
-                    NetworkSystem.ConnectTo(addr);
-                }
-            }
-        }
-
 
         /// <summary>
         /// 作为主机开房间
@@ -97,7 +92,8 @@ namespace GameSystem.Operator
             try
             {
                 NetworkSystem.LaunchServer();
-                StartCoroutine(BoardcastInfo());
+                NetworkSystem.server.TurnOnTCP();
+                NetworkSystem.ConnectTo(NetworkSystem.LocalIPAddress);
             }
             catch (SocketException ex)
             {
@@ -106,14 +102,6 @@ namespace GameSystem.Operator
                     NetworkSystem.ShutdownServer();
                     ipOccupied = true;
                 }
-            }
-        }
-        IEnumerator BoardcastInfo()
-        {
-            while (true)
-            {
-                ServerUDPBoardcastPacket(new URoomBrief(PersonalizationSystem.LocalRoomInfo.name));
-                yield return new WaitForSeconds(Setting.udpBoardcastInterval);
             }
         }
 
@@ -130,6 +118,7 @@ namespace GameSystem.Operator
                 if (GUILayout.Button("创建房间"))
                 {
                     LaunchServer();
+
                 }
                 localIp = GUILayout.TextField(localIp);
                 serverIp = GUILayout.TextField(serverIp);
@@ -137,6 +126,10 @@ namespace GameSystem.Operator
                 {
                     NetworkSystem.LocalIPAddress = IPAddress.Parse(localIp);
                     NetworkSystem.ConnectTo(IPAddress.Parse(serverIp));
+                }
+                if (GUILayout.Button("刷新"))
+                {
+                    RefreshServerList();
                 }
             }
             if (LocalIPCheck)

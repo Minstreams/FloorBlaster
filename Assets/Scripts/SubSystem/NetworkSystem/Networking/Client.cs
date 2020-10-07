@@ -51,6 +51,7 @@ namespace GameSystem.Networking
             }
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             udpClient.Send(messageBytes, messageBytes.Length, remote);
+            Log($"UDPSend{remote}:{message}");
         }
 
         public void OpenUDP()
@@ -103,7 +104,10 @@ namespace GameSystem.Networking
                 catch (SocketException ex)
                 {
                     Log(ex);
-                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse) port = NetworkSystem.GetValidPort();
+                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                    {
+                        port = NetworkSystem.GetValidPort();
+                    }
                     else break;
                 }
                 catch (Exception ex)
@@ -213,7 +217,6 @@ namespace GameSystem.Networking
                 catch (SocketException ex)
                 {
                     Log(ex);
-                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse) port = NetworkSystem.GetValidPort();
                     Log("连接失败！重新连接中……:" + port);
                     Thread.Sleep(1000);
                     continue;
@@ -291,17 +294,17 @@ namespace GameSystem.Networking
         }
         #endregion
 
-        static void Log(object msg)
+        void Log(object msg)
         {
             if (!TheMatrix.debug) return;
             string msgStr = "[Client]" + msg.ToString();
             NetworkSystem.CallLog(msgStr);
         }
-        static void Log(SocketException ex)
+        void Log(SocketException ex)
         {
-            NetworkSystem.CallLog("[Client Exception]" + ex.GetType().Name + "|" + ex.SocketErrorCode + ":" + ex.Message + "\n" + ex.StackTrace);
+            NetworkSystem.CallLog("[Client Exception:" + port + "]" + ex.GetType().Name + "|" + ex.SocketErrorCode + ":" + ex.Message + "\n" + ex.StackTrace);
         }
-        static void Log(Exception ex)
+        void Log(Exception ex)
         {
             NetworkSystem.CallLog("[Client Exception]" + ex.GetType().Name + ":" + ex.Message + "\n" + ex.StackTrace);
         }

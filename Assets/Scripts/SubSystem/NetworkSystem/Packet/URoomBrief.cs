@@ -5,10 +5,8 @@
 public class URoomBrief : Pkt<URoomBrief>
 {
     public string title;
-    public string hello;
     public URoomBrief(string title) : base()
     {
         this.title = title;
-        this.hello = NetworkSystem.clientHello;
     }
 }

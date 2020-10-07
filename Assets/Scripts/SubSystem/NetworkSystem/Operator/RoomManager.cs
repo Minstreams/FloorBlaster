@@ -29,7 +29,7 @@ namespace GameSystem.Operator
             if (IsServer)
             {
                 roomInfo = PersonalizationSystem.LocalRoomInfo;
-                StartCoroutine(BoardcastBrief());
+                ServerUDPSendPacket(new HServerReg(NetworkSystem.LocalIPAddress.ToString()), NetworkSystem.HelperEndPoint);
             }
             else
             {
@@ -67,6 +67,7 @@ namespace GameSystem.Operator
             var g = GameObject.Instantiate(Setting.playerPrefab, pos, Quaternion.identity, playerRoot);
             var avater = g.GetComponent<PlayerAvater>();
             avater.info = info;
+            avater.targetPosition = pos;
             avater.ActivateId(id);
             playersDatabase.Add(avater.netId, avater);
         }
@@ -98,6 +99,7 @@ namespace GameSystem.Operator
                 if (playersDatabase.ContainsKey(p.id))
                 {
                     playersDatabase[p.id].info = p.info;
+                    playersDatabase[p.id].targetPosition = p.pos;
                 }
                 else
                 {
@@ -163,20 +165,16 @@ namespace GameSystem.Operator
         {
             // 服务器处理Echo
             PacketBase pkt = StringToPacket(packet.message);
-            if (pkt.MatchType(typeof(UEcho)))
+            if (pkt.MatchType(typeof(UHello)))
             {
-                ServerUDPSendPacket(new UEcho(packet.endPoint.Address), packet.endPoint);
+                var hello = pkt as UHello;
+                // 对暗号！
+                if (hello.hello != NetworkSystem.clientHello) return;
+
+                ServerUDPSendPacket(new URoomBrief(roomInfo.name), packet.endPoint);
             }
         }
 
-        IEnumerator BoardcastBrief()
-        {
-            while (true)
-            {
-                ServerUDPBoardcastPacket(new URoomBrief(roomInfo.name));
-                yield return new WaitForSeconds(Setting.udpBoardcastInterval);
-            }
-        }
 
         private void OnGUI()
         {

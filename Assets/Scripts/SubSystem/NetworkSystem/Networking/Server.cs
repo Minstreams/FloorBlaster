@@ -52,12 +52,13 @@ namespace GameSystem.Networking
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             udpClient.Send(messageBytes, messageBytes.Length, remote);
+            Log($"UDPSend{remote}:{message}");
         }
         public void UDPBoardcast(string message)
         {
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
             udpClient.Send(messageBytes, messageBytes.Length, new IPEndPoint(IPAddress.Broadcast, Setting.clientUDPPort));
-            Log($"UDPSend255.255.255.255:{message}");
+            Log($"UDPBoardcast:{message}");
         }
 
         public void TurnOnTCP()

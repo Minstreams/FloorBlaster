@@ -55,6 +55,8 @@ namespace GameSystem
         public static IPAddress ServerIPAddress { get; private set; } = IPAddress.Any;
         public static int LocalIPPort = 0;
 
+        public static IPEndPoint HelperEndPoint => new IPEndPoint(IPAddress.Parse("111.229.94.88"), 9992);
+
         public static Server server = null;
         public static Client client = null;
 
@@ -87,9 +89,11 @@ namespace GameSystem
         /// 用来压缩vec2后的小数点位数
         /// </summary>
         static Regex vec2Compressor = new Regex("\\{\"x\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"y\"\\:(-?\\d+\\.\\d{1,3})\\d*\\}", RegexOptions.Multiline);
+        static Regex vec3Compressor = new Regex("\\{\"x\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"y\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"z\"\\:(-?\\d+\\.\\d{1,3})\\d*\\}", RegexOptions.Multiline);
         public static string PacketToString(PacketBase pkt)
         {
             string output = vec2Compressor.Replace(JsonUtility.ToJson(pkt), "{\"x\":$1,\"y\":$2}");
+            output = vec3Compressor.Replace(output, "{\"x\":$1,\"y\":$2,\"z\":$3}");
             if (string.IsNullOrWhiteSpace(output)) throw new System.Exception("PacketEmpty!");
             return output;
         }

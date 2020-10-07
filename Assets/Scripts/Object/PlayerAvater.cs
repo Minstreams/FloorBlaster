@@ -98,4 +98,12 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
         inputVec = packet.input;
         ServerBoardcastPacket(new SiMove(connection.netId, packet.input));
     }
+
+    private void OnDrawGizmos()
+    {
+        var c = Gizmos.color;
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireCube(targetPosition, Vector3.one);
+        Gizmos.color = c;
+    }
 }
