@@ -30,6 +30,10 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
         lerpRate = 1 - Mathf.Pow(0.001f, Time.fixedDeltaTime / Setting.lerpTime);
         if (isLocal) local = this;
     }
+    private void Update()
+    {
+        transform.position = Vector3.Lerp(transform.position, targetPosition, 0.05f);
+    }
     private void FixedUpdate()
     {
         if (IsServer || !isLocal)
@@ -41,7 +45,6 @@ public class PlayerAvater : GameSystem.Networking.NetworkPlayer
             velocityRaw = Vector2.Lerp(velocityRaw, InputSystem.movement, lerpRate);
         }
         targetPosition += velocity * Time.deltaTime;
-        transform.position = Vector3.Lerp(transform.position, targetPosition, lerpRate / 2f);
     }
 
     [TCPReceive]

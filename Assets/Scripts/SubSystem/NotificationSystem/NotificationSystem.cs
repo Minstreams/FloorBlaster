@@ -17,6 +17,7 @@ namespace GameSystem
         public static void ShowNotification(string text)
         {
             onShowNotification?.Invoke(text);
+
         }
     }
 }
