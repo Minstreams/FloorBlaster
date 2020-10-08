@@ -25,11 +25,13 @@ namespace GameSystem.Linker
                 timer += Time.deltaTime / time;
             }
             output?.Invoke(curve.Evaluate(1));
+            onFinish?.Invoke();
         }
 
         //Output
         [MinsHeader("Output", SummaryType.Header, 3)]
         public FloatEvent output;
+        public SimpleEvent onFinish;
 
 
         //Input

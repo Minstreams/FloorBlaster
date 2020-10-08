@@ -56,7 +56,7 @@ namespace GameSystem
 
         IEnumerator _Logo()
         {
-            SceneSystem.LoadScene(GameScene.logo);
+            yield return SceneSystem.LoadScene(GameScene.logo);
             yield return 0;
 
             //在进入每个状态前重置控制信息
@@ -77,7 +77,7 @@ namespace GameSystem
         IEnumerator _StartMenu()
         {
             NetworkSystem.ShutdownClient();
-            SceneSystem.LoadScene(GameScene.startMenu);
+            yield return SceneSystem.LoadScene(GameScene.startMenu);
             yield return 0;
             InputSystem.ChangeState(new InputSystem.MoveState());
 
@@ -96,7 +96,7 @@ namespace GameSystem
         IEnumerator _Lobby()
         {
             NetworkSystem.LaunchClient();
-            SceneSystem.LoadScene(GameScene.lobby);
+            yield return SceneSystem.LoadScene(GameScene.lobby);
             onGameReady?.Invoke();
             yield return 0;
 
@@ -120,7 +120,7 @@ namespace GameSystem
 
         IEnumerator _Room()
         {
-            SceneSystem.LoadScene(GameScene.room);
+            yield return SceneSystem.LoadScene(GameScene.room);
             yield return 0;
 
             ResetGameMessage();
@@ -138,26 +138,6 @@ namespace GameSystem
 
         }
 
-        // 游戏开始
-        IEnumerator _Start()
-        {
-            //SceneSystem.LoadScene(GameScene.startScene);
-            InputSystem.ChangeState(new InputSystem.MoveState());
-
-            onGameStart?.Invoke();
-            yield return 0;
-
-            ResetGameMessage();
-            while (true)
-            {
-                //提前return，延迟一帧开始检测
-                yield return 0;
-                if (GetGameMessage(GameMessage.Next)) NetworkSystem.LaunchServer();
-                if (GetGameMessage(GameMessage.Return)) NetworkSystem.LaunchClient();
-                if (GetGameMessage(GameMessage.GameWin)) NetworkSystem.ShutdownServer();
-                if (GetGameMessage(GameMessage.GameOver)) NetworkSystem.ShutdownClient();
-            }
-        }
         #endregion
 
         #region 应用 & 参数 =================================

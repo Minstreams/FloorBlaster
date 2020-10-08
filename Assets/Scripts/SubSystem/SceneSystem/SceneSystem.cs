@@ -11,138 +11,26 @@ namespace GameSystem
     /// </summary>
     public class SceneSystem : SubSystem<SceneSystemSetting>
     {
-        /// <summary>
-        /// 场景栈
-        /// </summary>
-        static Stack<string> sceneStack = new Stack<string>();
-        /// <summary>
-        /// 场景加载进度事件，用于在加载场景中播放进度加载效果
-        /// </summary>
-        public static event System.Action<float> InLoadingProgress;
-        static AsyncOperation progress;
-        /// <summary>
-        /// 场景加载结束事件，用于退出加载效果并延迟一段时间，返回延迟秒数
-        /// </summary>
-        public static event System.Func<float> OnLoaded;
-        /// <summary>
-        /// 场景卸载事件，用于卸载前延迟一段时间，并返回延迟秒数
-        /// </summary>
-        public static event System.Func<float> OnUnLoaded;
+        public static event System.Action OnPendingLoadScene;
+        public static TheMatrix.GameScene sceneToLoad { private set; get; }
 
-        //API---------------------------------
-        /// <summary>
-        /// 获取委托列表最大返回值，为空则返回0
-        /// </summary>
-        static float GetMaxReturn(System.Func<float> func)
+        static bool loadConfirmed;
+        public static void ConfirmLoadScene()
         {
-            if (func == null) return 0;
-            System.Delegate[] list = func.GetInvocationList();
-            float max = 0;
-
-            foreach (System.Delegate d in list)
-            {
-                System.Func<float> f = d as System.Func<float>;
-                float temp = f();
-                if (temp > max) max = temp;
-            }
-
-            return max;
+            loadConfirmed = true;
         }
-        static IEnumerator YieldPushScene(string sceneName, bool loadLoadingScene)
+        public static IEnumerator LoadScene(TheMatrix.GameScene gameScene)
         {
-            //加载新场景
-            progress = SceneManager.LoadSceneAsync(sceneName, sceneStack.Count == 0 ? LoadSceneMode.Single : LoadSceneMode.Additive);
-
-            if (loadLoadingScene)
-                //加载Loading场景
-                SceneManager.LoadScene(Setting.loadingScene, LoadSceneMode.Additive);
-
-            //加载进度效果
-            while (!progress.isDone)
+            loadConfirmed = false;
+            sceneToLoad = gameScene;
+            OnPendingLoadScene?.Invoke();
+            Log("Pending Load Scene: " + gameScene);
+            while (!loadConfirmed)
             {
-                if (InLoadingProgress != null) InLoadingProgress(progress.progress);
                 yield return 0;
             }
-
-            //加载后延迟
-            yield return new WaitForSeconds(GetMaxReturn(OnLoaded));
-
-            if (loadLoadingScene)
-                //卸载Loading场景
-                SceneManager.UnloadSceneAsync(Setting.loadingScene);
-
-            sceneStack.Push(sceneName);
-        }
-        static IEnumerator YieldPopScene(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            string toPop = sceneStack.Pop();
-            if (sceneStack.Count > 0)
-                SceneManager.UnloadSceneAsync(toPop);
-        }
-        static IEnumerator YieldPopAndPushScene(float delay, string sceneName, bool loadLoadingScene)
-        {
-            yield return YieldPopScene(delay);
-            yield return YieldPushScene(sceneName, loadLoadingScene);
-        }
-        /// <summary>
-        /// 新场景入栈
-        /// </summary>
-        /// <param name="sceneName">场景名</param>
-        /// <param name="loadLoadingScene">是否显示加载场景</param>
-        public static void PushScene(string sceneName, bool loadLoadingScene = false)
-        {
-            Debug.Log("Push场景 " + sceneName);
-
-            StartCoroutine(YieldPushScene(sceneName, loadLoadingScene));
-        }
-        /// <summary>
-        /// 场景出栈,返回延迟秒数
-        /// </summary>
-        public static float PopScene()
-        {
-            if (sceneStack.Count == 0)
-            {
-                Debug.LogError("场景栈空了");
-                return 0;
-            }
-            float delay = GetMaxReturn(OnUnLoaded);
-            StartCoroutine(YieldPopScene(delay));
-            return delay;
-        }
-        /// <summary>
-        /// 出栈并入栈
-        /// </summary>
-        /// <param name="sceneName">场景名</param>
-        /// <param name="loadLoadingScene">是否显示加载场景</param>
-        public static float PopAndPushScene(string sceneName, bool loadLoadingScene = false)
-        {
-            if (sceneStack.Count == 0)
-            {
-                Debug.LogError("场景栈空了");
-                return 0;
-            }
-            float delay = GetMaxReturn(OnUnLoaded);
-            StartCoroutine(YieldPopAndPushScene(delay, sceneName, loadLoadingScene));
-            return delay;
-        }
-        /// <summary>
-        /// 最简单的加载场景方法
-        /// </summary>
-        public static void LoadScene(string sceneName)
-        {
-            SceneManager.LoadScene(sceneName);
-        }
-
-        public static void LoadScene(TheMatrix.GameScene gameScene)
-        {
+            Log("Load Confirmed!");
             SceneManager.LoadScene(TheMatrix.GetScene(gameScene));
         }
-
-        //[RuntimeInitializeOnLoadMethod]
-        //static void RuntimeInit()
-        //{
-        //    //用于控制Action初始化
-        //}
     }
 }
