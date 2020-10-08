@@ -38,6 +38,8 @@ namespace GameSystem
         /// </summary>
         public static string netId;
 
+
+
         /// <summary>
         /// 本地IP是否已经确定
         /// </summary>
@@ -59,6 +61,26 @@ namespace GameSystem
 
         public static Server server = null;
         public static Client client = null;
+
+
+        // 网络同步 --------------------------------
+        /// <summary>
+        /// 游戏房间计时器
+        /// </summary>
+        public static float timer;
+        /// <summary>
+        /// 与服务器的时间差
+        /// </summary>
+        public static float timerOffset;
+        /// <summary>
+        /// 服务器时间
+        /// </summary>
+        public static float ServerTimer => IsServer ? timer : timer + timerOffset;
+        /// <summary>
+        /// 延迟
+        /// </summary>
+        public static float latency = 0;
+
 
         #region API ------------------------------------------
         /// <summary>
@@ -85,15 +107,13 @@ namespace GameSystem
             }
             return null;
         }
+        static Regex floatCompressor = new Regex("\\:(-?\\d+\\.\\d{1,4})\\d*([,\\}e])");
         /// <summary>
         /// 用来压缩vec2后的小数点位数
         /// </summary>
-        static Regex vec2Compressor = new Regex("\\{\"x\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"y\"\\:(-?\\d+\\.\\d{1,3})\\d*\\}", RegexOptions.Multiline);
-        static Regex vec3Compressor = new Regex("\\{\"x\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"y\"\\:(-?\\d+\\.\\d{1,3})\\d*,\"z\"\\:(-?\\d+\\.\\d{1,3})\\d*\\}", RegexOptions.Multiline);
         public static string PacketToString(PacketBase pkt)
         {
-            string output = vec2Compressor.Replace(JsonUtility.ToJson(pkt), "{\"x\":$1,\"y\":$2}");
-            output = vec3Compressor.Replace(output, "{\"x\":$1,\"y\":$2,\"z\":$3}");
+            string output = floatCompressor.Replace(JsonUtility.ToJson(pkt), ":$1$2");
             if (string.IsNullOrWhiteSpace(output)) throw new System.Exception("PacketEmpty!");
             return output;
         }

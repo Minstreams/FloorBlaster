@@ -24,6 +24,8 @@ namespace GameSystem.Networking
         protected static bool LocalIPCheck => NetworkSystem.LocalIPCheck;
         protected static IPAddress LocalIPAddress { get => NetworkSystem.LocalIPAddress; set => NetworkSystem.LocalIPAddress = value; }
         protected static IPAddress ServerIPAddress => NetworkSystem.ServerIPAddress;
+        protected float timer { get => NetworkSystem.timer; set => NetworkSystem.timer = value; }
+        protected float ServerTimer => NetworkSystem.ServerTimer;
         protected static PacketBase StringToPacket(string str) => NetworkSystem.StringToPacket(str);
         protected static string PacketToString(PacketBase pkt) => NetworkSystem.PacketToString(pkt);
         protected static void ClientSendPacket(PacketBase pkt) => NetworkSystem.ClientSendPacket(pkt);

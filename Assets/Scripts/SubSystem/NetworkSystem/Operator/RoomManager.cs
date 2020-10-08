@@ -22,17 +22,25 @@ namespace GameSystem.Operator
         public PersonalizationSystem.RoomInfo roomInfo;
         public string thisID;
         public Transform playerRoot;
+
+        float timerOffset { get => NetworkSystem.timerOffset; set => NetworkSystem.timerOffset = value; }
+        float timerTargetOffset = 0;
+        float latency { get => NetworkSystem.latency; set => NetworkSystem.latency = value; }
+
         void Start()
         {
+            timer = 0;
             thisID = NetworkSystem.netId;
             playersDatabase.Add(NetworkSystem.netId, PlayerAvater.local);
             if (IsServer)
             {
                 roomInfo = PersonalizationSystem.LocalRoomInfo;
-                ServerUDPSendPacket(new HServerReg(NetworkSystem.LocalIPAddress.ToString()), NetworkSystem.HelperEndPoint);
+                ServerUDPSendPacket(new HServerReg(LocalIPAddress.ToString()), NetworkSystem.HelperEndPoint);
             }
             else
             {
+                // 请求同步时间
+                ClientSendPacket(new RTimer());
                 // 客户端发送信息同步请求
                 ClientSendPacket(new RInfo());
                 // 将自己的玩家信息发送给服务器
@@ -40,10 +48,18 @@ namespace GameSystem.Operator
             }
         }
 
+        private void Update()
+        {
+            timer += Time.deltaTime;
+            if (timerTargetOffset - timerOffset > 1) timerOffset = timerTargetOffset;
+            else timerOffset = Mathf.Lerp(timerOffset, timerTargetOffset, 0.1f);
+            if (IsServer) ServerUpdate();
+        }
+
+
         // 玩家管理 -------------------------------------
         Dictionary<string, PlayerAvater> playersDatabase = new Dictionary<string, PlayerAvater>();
-        Queue<PlayerRecordUnit> serverCallAddPlayerQueue = new Queue<PlayerRecordUnit>();
-        Queue<string> serverCallDeletePlayerQueue = new Queue<string>();
+
         [System.Serializable]
         public struct PlayerRecordUnit
         {
@@ -58,10 +74,6 @@ namespace GameSystem.Operator
                 this.pos = pos;
             }
         }
-        void ServerCallAddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
-        {
-            serverCallAddPlayerQueue.Enqueue(new PlayerRecordUnit(id, info, pos));
-        }
         void AddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
         {
             var g = GameObject.Instantiate(Setting.playerPrefab, pos, Quaternion.identity, playerRoot);
@@ -70,10 +82,6 @@ namespace GameSystem.Operator
             avater.targetPosition = pos;
             avater.ActivateId(id);
             playersDatabase.Add(avater.netId, avater);
-        }
-        void ServerCallDeletePlayer(string id)
-        {
-            serverCallDeletePlayerQueue.Enqueue(id);
         }
         void DeletePlayer(string id)
         {
@@ -84,6 +92,12 @@ namespace GameSystem.Operator
 
 
         // 客户端 ---------------------------------------
+        [TCPReceive]
+        void STimerReceive(STimer pkt)
+        {
+            timerTargetOffset = pkt.t - (pkt.tSent + timer) * 0.5f;
+            latency = (timer - pkt.tSent) * 0.5f;
+        }
         [TCPReceive]
         void SInfoReceive(SInfo pkt)
         {
@@ -108,17 +122,23 @@ namespace GameSystem.Operator
             }
         }
 
-        public Vector3 NewPlayerPos()
-        {
-            return new Vector3(7, 0.5f, 7);
-        }
+
 
         // 服务器 TCP -----------------------------------
+        [TCPProcess]
+        void RTimerProcess(RTimer pkt, Server.Connection connection)
+        {
+            connection.Send(new STimer(pkt.t));
+        }
         [TCPProcess]
         void RInfoProcess(RInfo pkt, Server.Connection connection)
         {
             // 收到客户端的请求，发送房间信息
-            connection.Send(PacketToString(new SInfo(roomInfo)));
+            connection.Send(new SInfo(roomInfo));
+        }
+        public Vector3 NewPlayerPos()
+        {
+            return new Vector3(4, 0.5f, 4);
         }
         [TCPProcess]
         void CPlayerInfoProcess(CPlayerInfo pkt, Server.Connection connection)
@@ -142,22 +162,32 @@ namespace GameSystem.Operator
         }
 
 
-        private void Update()
+        Queue<PlayerRecordUnit> serverCallAddPlayerQueue = new Queue<PlayerRecordUnit>();
+        Queue<string> serverCallDeletePlayerQueue = new Queue<string>();
+        void ServerUpdate()
         {
-            if (IsServer)
+            while (serverCallAddPlayerQueue.Count > 0)
             {
-                while (serverCallAddPlayerQueue.Count > 0)
-                {
-                    var p = serverCallAddPlayerQueue.Dequeue();
-                    AddPlayer(p.id, p.info, p.pos);
-                    ServerBoardcastPacket(new SPlayerInfo(playersDatabase));
-                }
-                while (serverCallDeletePlayerQueue.Count > 0)
-                {
-                    DeletePlayer(serverCallDeletePlayerQueue.Dequeue());
-                }
+                var p = serverCallAddPlayerQueue.Dequeue();
+                AddPlayer(p.id, p.info, p.pos);
+                ServerBoardcastPacket(new SPlayerInfo(playersDatabase));
+            }
+            while (serverCallDeletePlayerQueue.Count > 0)
+            {
+                DeletePlayer(serverCallDeletePlayerQueue.Dequeue());
             }
         }
+        void ServerCallAddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
+        {
+            serverCallAddPlayerQueue.Enqueue(new PlayerRecordUnit(id, info, pos));
+        }
+        void ServerCallDeletePlayer(string id)
+        {
+            serverCallDeletePlayerQueue.Enqueue(id);
+        }
+
+
+
 
         // 服务器 UDP -----------------------------------
         [UDPProcess]
@@ -175,12 +205,16 @@ namespace GameSystem.Operator
             }
         }
 
-
         private void OnGUI()
         {
+            if (GUILayout.Button("Disconnect")) NetworkSystem.client.StopTCPConnecting();
             GUILayout.Label("LocalIP:" + NetworkSystem.LocalIPAddress);
             GUILayout.Label("ServerIP:" + NetworkSystem.ServerIPAddress);
             GUILayout.Label("Room:" + roomInfo.name);
+            GUILayout.Label("Timer:" + timer);
+            GUILayout.Label("TimerOffset:" + timerOffset);
+            GUILayout.Label("TimerTargetOffset:" + timerTargetOffset);
+            GUILayout.Label("Latency:" + latency);
             GUILayout.Label(thisID);
         }
     }

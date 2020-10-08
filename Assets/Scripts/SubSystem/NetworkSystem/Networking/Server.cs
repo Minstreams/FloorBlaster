@@ -216,6 +216,7 @@ namespace GameSystem.Networking
             public IPEndPoint RemoteEndPoint { get { return (IPEndPoint)client.Client.RemoteEndPoint; } }
             public IPEndPoint UDPEndPoint { get { return new IPEndPoint(RemoteEndPoint.Address, NetworkSystem.Setting.clientUDPPort); } }
             public string netId;
+            public bool isHost;
             public void Destroy()
             {
                 if (isDestroyed)
@@ -236,6 +237,10 @@ namespace GameSystem.Networking
                 byte[] messageBytes = Encoding.UTF8.GetBytes(message + NetworkSystem.overMark);
                 stream.Write(messageBytes, 0, messageBytes.Length);
             }
+            public void Send(PacketBase packet)
+            {
+                Send(NetworkSystem.PacketToString(packet));
+            }
             #endregion
 
             #region Inner Code -----------------------------------
@@ -254,6 +259,7 @@ namespace GameSystem.Networking
                 this.server = server;
                 this.client = client;
                 this.netId = netId;
+                this.isHost = netId.Equals("0");
                 stream = client.GetStream();
                 receiveThread = new Thread(ReceiveThread);
                 receiveThread.Start();

@@ -39,7 +39,5 @@ namespace GameSystem.Setting
         /// </summary>
         [Label]
         public float inputSendMoveThreadhold = 0.5f;
-        [Label]
-        public float posSyncInterval = 0.1f;
     }
 }

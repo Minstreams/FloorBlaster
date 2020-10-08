@@ -218,6 +218,24 @@ namespace GameSystem.Networking
                 {
                     Log(ex);
                     Log("连接失败！重新连接中……:" + port);
+                    if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                    {
+                        while (true)
+                        {
+                            client?.Close();
+                            port = NetworkSystem.GetValidPort();
+                            Log("更换Port重连中:" + port);
+                            try
+                            {
+                                client = new TcpClient(new IPEndPoint(NetworkSystem.LocalIPAddress, port));
+                                break;
+                            }
+                            catch (SocketException exx)
+                            {
+                                if (exx.SocketErrorCode == SocketError.AddressAlreadyInUse) continue;
+                            }
+                        }
+                    }
                     Thread.Sleep(1000);
                     continue;
                 }
