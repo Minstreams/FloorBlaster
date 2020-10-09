@@ -30,7 +30,8 @@ namespace GameSystem.Operator
         void Start()
         {
             timer = 0;
-            playersDatabase.Add(NetworkSystem.netId, PlayerAvater.local);
+            GameplaySystem.playerRoot = playerRoot;
+
             if (IsServer)
             {
                 roomInfo = PersonalizationSystem.LocalRoomInfo;
@@ -45,10 +46,6 @@ namespace GameSystem.Operator
                 // 将自己的玩家信息发送给服务器
                 ClientSendPacket(new CPlayerInfo(PersonalizationSystem.LocalPlayerInfo));
             }
-            _onDestroyEvent += () =>
-            {
-                playersDatabase.Clear();
-            };
         }
 
         private void Update()
@@ -56,24 +53,6 @@ namespace GameSystem.Operator
             timer += Time.deltaTime;
             if (timerTargetOffset - timerOffset > 1) timerOffset = timerTargetOffset;
             else timerOffset = Mathf.Lerp(timerOffset, timerTargetOffset, 0.1f);
-        }
-
-        // 玩家管理 -------------------------------------
-
-        void AddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
-        {
-            var g = GameObject.Instantiate(Setting.playerPrefab, pos, Quaternion.identity, playerRoot);
-            var avater = g.GetComponent<PlayerAvater>();
-            avater.info = info;
-            avater.targetPosition = pos;
-            avater.ActivateId(id);
-            playersDatabase.Add(avater.netId, avater);
-        }
-        void DeletePlayer(string id)
-        {
-            if (!playersDatabase.ContainsKey(id)) throw new System.Exception("正在试图删除一个不存在的玩家。ID：" + id);
-            Destroy(playersDatabase[id].gameObject);
-            playersDatabase.Remove(id);
         }
 
 
@@ -103,7 +82,7 @@ namespace GameSystem.Operator
                 }
                 else
                 {
-                    AddPlayer(p.id, p.info, p.pos);
+                    GameplaySystem.AddPlayer(p.id, p.info, p.pos);
                 }
             }
         }
@@ -122,10 +101,6 @@ namespace GameSystem.Operator
             // 收到客户端的请求，发送房间信息
             connection.Send(new SInfo(roomInfo));
         }
-        public Vector3 NewPlayerPos()
-        {
-            return new Vector3(4, 0.5f, 4);
-        }
         [TCPProcess]
         void CPlayerInfoProcess(CPlayerInfo pkt, Server.Connection connection)
         {
@@ -140,8 +115,8 @@ namespace GameSystem.Operator
                 // 添加数据
                 CallMainThread(() =>
                 {
-                    AddPlayer(connection.netId, pkt.info, NewPlayerPos());
-                    ServerBoardcastPacket(new SPlayerInfo(playersDatabase));
+                    GameplaySystem.AddPlayer(connection.netId, pkt.info);
+                    ServerBoardcastPacket(new SPlayerInfo());
                 });
             }
         }
@@ -150,7 +125,7 @@ namespace GameSystem.Operator
         {
             CallMainThread(() =>
             {
-                DeletePlayer(connection.netId);
+                GameplaySystem.DeletePlayer(connection.netId);
             });
         }
 

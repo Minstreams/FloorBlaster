@@ -20,7 +20,6 @@ namespace GameSystem.Operator
         [ConditionalShow, SerializeField] private bool useless; //在没有数据的时候让标题正常显示
 #endif
         private Dictionary<IPAddress, UIRoomInfo> roomUIElements = new Dictionary<IPAddress, UIRoomInfo>();
-        private bool ipOccupied = false;
 
         private void Start()
         {
@@ -100,7 +99,7 @@ namespace GameSystem.Operator
                 if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
                 {
                     NetworkSystem.ShutdownServer();
-                    ipOccupied = true;
+                    NotificationSystem.ShowNotification("相同地址已经存在一个服务器");
                 }
             }
         }
@@ -109,10 +108,6 @@ namespace GameSystem.Operator
         string serverIp = "";
         void OnGUI()
         {
-            if (ipOccupied)
-            {
-                GUILayout.Label("相同地址已经存在一个服务器~");
-            }
             if (GUILayout.Button("创建房间"))
             {
                 LaunchServer();

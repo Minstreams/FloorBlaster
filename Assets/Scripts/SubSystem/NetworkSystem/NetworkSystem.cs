@@ -22,7 +22,9 @@ namespace GameSystem
         /// 寻找主机时使用的验证消息
         /// </summary>
         public const string clientHello = "Hellov0.0.1";
-
+        /// <summary>
+        /// TCP包分隔符
+        /// </summary>
         public const char overMark = '✡';
 
         /// <summary>
@@ -143,21 +145,21 @@ namespace GameSystem
         public static void ShutdownServer()
         {
             IsServer = false;
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 Log("Shutdown Server");
                 server?.Destroy();
                 server = null;
-            };
+            });
         }
         public static void ShutdownClient()
         {
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 Log("Shutdown Client");
                 client?.Destroy();
                 client = null;
-            };
+            });
         }
         public static void ConnectTo(IPAddress serverIPAddress)
         {
@@ -265,20 +267,24 @@ namespace GameSystem
         /// </summary>
         public static void CallLog(string message)
         {
-            MainThreadAction += () => { Debug.Log(message); };
+            CallMainThread(() => { Debug.Log(message); });
         }
+        /// <summary>
+        ///  调用主线程
+        /// </summary>
+        public static void CallMainThread(System.Action action) => MainThreadActionQueue.Enqueue(action);
 
         // 客户端
         public static void CallUDPReceive(UDPPacket packet)
         {
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 OnUDPReceive?.Invoke(packet);
-            };
+            });
         }
         public static void CallReceive(string message)
         {
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 OnReceive?.Invoke(message);
                 var pkt = StringToPacket(message);
@@ -294,23 +300,23 @@ namespace GameSystem
                         tcpSubDistributors[pktTid.id]?.Invoke(pktTid);
                     }
                 }
-            };
+            });
         }
         public static void CallConnection()
         {
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 TheMatrix.SendGameMessage(GameMessage.Connect);
                 OnConnection?.Invoke();
-            };
+            });
         }
         public static void CallDisconnection()
         {
-            MainThreadAction += () =>
+            CallMainThread(() =>
             {
                 OnDisconnection?.Invoke();
                 TheMatrix.SendGameMessage(GameMessage.DisConnect);
-            };
+            });
         }
 
         // 服务端
@@ -360,24 +366,7 @@ namespace GameSystem
         /// </summary>
         static Dictionary<string, System.Action<PacketBase, Server.Connection>> tcpSubProcessors = new Dictionary<string, System.Action<PacketBase, Server.Connection>>();
 
-
-        /// <summary>
-        ///  调用主线程
-        /// </summary>
-        public static void CallMainThread(System.Action action) => MainThreadAction += action;
-        static System.Action MainThreadAction = null;
-        static IEnumerator MainThread()
-        {
-            while (true)
-            {
-                yield return 0;
-                while (MainThreadAction != null)
-                {
-                    MainThreadAction.Invoke();
-                    MainThreadAction = null;
-                }
-            }
-        }
+        static Queue<System.Action> MainThreadActionQueue = new Queue<System.Action>();
         #endregion
 
         [RuntimeInitializeOnLoadMethod]
@@ -385,8 +374,6 @@ namespace GameSystem
         {
             //用于控制Action初始化
             TheMatrix.onGameAwake += OnGameAwake;
-            TheMatrix.onGameReady += OnGameReady;
-            TheMatrix.onGameStart += OnGameStart;
             TheMatrix.onQuitting += OnGameQuitting;
             //随便找个Setting里的值，用于在分线程前提前初始化Setting
             int active = Setting.serverTCPPort;
@@ -395,13 +382,13 @@ namespace GameSystem
         {
             StartCoroutine(MainThread());
         }
-        static void OnGameReady()
+        static IEnumerator MainThread()
         {
-
-        }
-        static void OnGameStart()
-        {
-            //在主场景游戏开始时和游戏重新开始时调用
+            while (true)
+            {
+                yield return 0;
+                while (MainThreadActionQueue.Count > 0) MainThreadActionQueue.Dequeue()?.Invoke();
+            }
         }
         static void OnGameQuitting()
         {

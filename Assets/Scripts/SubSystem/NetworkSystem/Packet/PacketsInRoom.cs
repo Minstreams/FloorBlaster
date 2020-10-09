@@ -129,10 +129,10 @@ public class SPlayerInfo : Pkt<SPlayerInfo>
     }
     public List<PlayerRecordUnit> records;
 
-    public SPlayerInfo(Dictionary<string, PlayerAvater> playersDatabase) : base()
+    public SPlayerInfo() : base()
     {
         records = new List<PlayerRecordUnit>();
-        var i = playersDatabase.GetEnumerator();
+        var i = GameplaySystem.playersDatabase.GetEnumerator();
         while (i.MoveNext())
         {
             var pair = i.Current;

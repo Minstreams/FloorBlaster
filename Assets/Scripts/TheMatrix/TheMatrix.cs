@@ -97,7 +97,6 @@ namespace GameSystem
         {
             NetworkSystem.LaunchClient();
             yield return SceneSystem.LoadScene(GameScene.lobby);
-            onGameReady?.Invoke();
             yield return 0;
 
             ResetGameMessage();
@@ -121,6 +120,7 @@ namespace GameSystem
         IEnumerator _Room()
         {
             yield return SceneSystem.LoadScene(GameScene.room);
+            onGameReady?.Invoke();
             yield return 0;
 
             ResetGameMessage();
@@ -173,7 +173,7 @@ namespace GameSystem
         /// </summary>
         public static event System.Action onGameAwake;
         /// <summary>
-        /// 游戏准备委托，在玩家退出主菜单进入下一步时调用
+        /// 游戏准备委托，在玩家进入房间时调用
         /// </summary>
         public static event System.Action onGameReady;
         /// <summary>
