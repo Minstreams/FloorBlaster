@@ -10,7 +10,7 @@ namespace GameSystem
     /// </summary>
     public class GameplaySystem : SubSystem<GameplaySystemSetting>
     {
-        //Your code here
+        public static Dictionary<string, PlayerAvater> playersDatabase = new Dictionary<string, PlayerAvater>();
 
 
         [RuntimeInitializeOnLoadMethod]

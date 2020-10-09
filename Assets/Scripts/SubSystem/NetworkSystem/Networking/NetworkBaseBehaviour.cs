@@ -26,6 +26,10 @@ namespace GameSystem.Networking
         protected static IPAddress ServerIPAddress => NetworkSystem.ServerIPAddress;
         protected float timer { get => NetworkSystem.timer; set => NetworkSystem.timer = value; }
         protected float ServerTimer => NetworkSystem.ServerTimer;
+        /// <summary>
+        /// 调用主线程
+        /// </summary>
+        protected void CallMainThread(System.Action action) => NetworkSystem.CallMainThread(action);
         protected static PacketBase StringToPacket(string str) => NetworkSystem.StringToPacket(str);
         protected static string PacketToString(PacketBase pkt) => NetworkSystem.PacketToString(pkt);
         protected static void ClientSendPacket(PacketBase pkt) => NetworkSystem.ClientSendPacket(pkt);

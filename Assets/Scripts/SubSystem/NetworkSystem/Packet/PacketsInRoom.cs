@@ -2,6 +2,7 @@
 using GameSystem.Operator;
 using System.Collections.Generic;
 using System.Net;
+using UnityEngine;
 
 /// <summary>
 /// 申请IP
@@ -112,16 +113,30 @@ public class CPlayerInfo : Pkt<CPlayerInfo>
 /// </summary>
 public class SPlayerInfo : Pkt<SPlayerInfo>
 {
-    public List<RoomManager.PlayerRecordUnit> records;
+    [System.Serializable]
+    public struct PlayerRecordUnit
+    {
+        public string id;
+        public PersonalizationSystem.PlayerInfo info;
+        public Vector3 pos;
+
+        public PlayerRecordUnit(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
+        {
+            this.id = id;
+            this.info = info;
+            this.pos = pos;
+        }
+    }
+    public List<PlayerRecordUnit> records;
 
     public SPlayerInfo(Dictionary<string, PlayerAvater> playersDatabase) : base()
     {
-        records = new List<RoomManager.PlayerRecordUnit>();
+        records = new List<PlayerRecordUnit>();
         var i = playersDatabase.GetEnumerator();
         while (i.MoveNext())
         {
             var pair = i.Current;
-            records.Add(new RoomManager.PlayerRecordUnit(pair.Key, pair.Value.info, pair.Value.transform.position));
+            records.Add(new PlayerRecordUnit(pair.Key, pair.Value.info, pair.Value.targetPosition));
         }
     }
 }

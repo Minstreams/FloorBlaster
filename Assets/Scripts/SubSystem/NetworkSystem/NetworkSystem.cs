@@ -143,11 +143,21 @@ namespace GameSystem
         public static void ShutdownServer()
         {
             IsServer = false;
-            pendingShutdownServer = true;
+            MainThreadAction += () =>
+            {
+                Log("Shutdown Server");
+                server?.Destroy();
+                server = null;
+            };
         }
         public static void ShutdownClient()
         {
-            pendingShutdownClient = true;
+            MainThreadAction += () =>
+            {
+                Log("Shutdown Client");
+                client?.Destroy();
+                client = null;
+            };
         }
         public static void ConnectTo(IPAddress serverIPAddress)
         {
@@ -255,29 +265,52 @@ namespace GameSystem
         /// </summary>
         public static void CallLog(string message)
         {
-            pendingLogQueue.Enqueue(message);
-            /// <summary>
-            /// Call Debug.Log in Main Thread
-            /// </summary>
-            /// <param name="message"></param>
+            MainThreadAction += () => { Debug.Log(message); };
         }
 
         // 客户端
         public static void CallUDPReceive(UDPPacket packet)
         {
-            pendingUDPReceiveQueue.Enqueue(packet);
+            MainThreadAction += () =>
+            {
+                OnUDPReceive?.Invoke(packet);
+            };
         }
         public static void CallReceive(string message)
         {
-            pendingReceiveQueue.Enqueue(message);
+            MainThreadAction += () =>
+            {
+                OnReceive?.Invoke(message);
+                var pkt = StringToPacket(message);
+                if (tcpDistributors.ContainsKey(pkt.ts))
+                {
+                    tcpDistributors[pkt.ts]?.Invoke(pkt);
+                }
+                if (pkt.IsSubclassOf(typeof(Pktid)))
+                {
+                    var pktTid = pkt as Pktid;
+                    if (tcpSubDistributors.ContainsKey(pktTid.id))
+                    {
+                        tcpSubDistributors[pktTid.id]?.Invoke(pktTid);
+                    }
+                }
+            };
         }
         public static void CallConnection()
         {
-            pendingConnection = true;
+            MainThreadAction += () =>
+            {
+                TheMatrix.SendGameMessage(GameMessage.Connect);
+                OnConnection?.Invoke();
+            };
         }
         public static void CallDisconnection()
         {
-            pendingDisconnection = true;
+            MainThreadAction += () =>
+            {
+                OnDisconnection?.Invoke();
+                TheMatrix.SendGameMessage(GameMessage.DisConnect);
+            };
         }
 
         // 服务端
@@ -327,54 +360,22 @@ namespace GameSystem
         /// </summary>
         static Dictionary<string, System.Action<PacketBase, Server.Connection>> tcpSubProcessors = new Dictionary<string, System.Action<PacketBase, Server.Connection>>();
 
-        static readonly Queue<string> pendingLogQueue = new Queue<string>();
-        static bool pendingShutdownServer = false;
-        static bool pendingShutdownClient = false;
-        static readonly Queue<UDPPacket> pendingUDPReceiveQueue = new Queue<UDPPacket>();
-        static readonly Queue<string> pendingReceiveQueue = new Queue<string>();
-        static bool pendingConnection = false;
-        static bool pendingDisconnection = false;
+
+        /// <summary>
+        ///  调用主线程
+        /// </summary>
+        public static void CallMainThread(System.Action action) => MainThreadAction += action;
+        static System.Action MainThreadAction = null;
         static IEnumerator MainThread()
         {
             while (true)
             {
                 yield return 0;
-                while (pendingLogQueue.Count > 0) Debug.Log(pendingLogQueue.Dequeue());
-                if (pendingShutdownServer)
+                while (MainThreadAction != null)
                 {
-                    pendingShutdownServer = false;
-                    Log("Shutdown Server");
-                    server?.Destroy();
-                    server = null;
+                    MainThreadAction.Invoke();
+                    MainThreadAction = null;
                 }
-                if (pendingShutdownClient)
-                {
-                    pendingShutdownClient = false;
-                    Log("Shutdown Client");
-                    client?.Destroy();
-                    client = null;
-                }
-                while (pendingUDPReceiveQueue.Count > 0) OnUDPReceive?.Invoke(pendingUDPReceiveQueue.Dequeue());
-                while (pendingReceiveQueue.Count > 0)
-                {
-                    string msg = pendingReceiveQueue.Dequeue();
-                    OnReceive?.Invoke(msg);
-                    var pkt = StringToPacket(msg);
-                    if (tcpDistributors.ContainsKey(pkt.ts))
-                    {
-                        tcpDistributors[pkt.ts]?.Invoke(pkt);
-                    }
-                    if (pkt.IsSubclassOf(typeof(Pktid)))
-                    {
-                        var pktTid = pkt as Pktid;
-                        if (tcpSubDistributors.ContainsKey(pktTid.id))
-                        {
-                            tcpSubDistributors[pktTid.id]?.Invoke(pktTid);
-                        }
-                    }
-                }
-                if (pendingConnection) { pendingConnection = false; TheMatrix.SendGameMessage(GameMessage.Connect); OnConnection?.Invoke(); }
-                if (pendingDisconnection) { pendingDisconnection = false; TheMatrix.SendGameMessage(GameMessage.DisConnect); OnDisconnection?.Invoke(); }
             }
         }
         #endregion
@@ -404,6 +405,7 @@ namespace GameSystem
         }
         static void OnGameQuitting()
         {
+            StopAllCoroutines();
             ShutdownServer();
             ShutdownClient();
         }

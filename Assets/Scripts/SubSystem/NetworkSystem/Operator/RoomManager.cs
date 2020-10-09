@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using GameSystem.Networking;
@@ -20,17 +19,17 @@ namespace GameSystem.Operator
 #endif
         [Label("房间信息")]
         public PersonalizationSystem.RoomInfo roomInfo;
-        public string thisID;
         public Transform playerRoot;
 
-        float timerOffset { get => NetworkSystem.timerOffset; set => NetworkSystem.timerOffset = value; }
         float timerTargetOffset = 0;
+        float timerOffset { get => NetworkSystem.timerOffset; set => NetworkSystem.timerOffset = value; }
         float latency { get => NetworkSystem.latency; set => NetworkSystem.latency = value; }
+        Dictionary<string, PlayerAvater> playersDatabase => GameplaySystem.playersDatabase;
+
 
         void Start()
         {
             timer = 0;
-            thisID = NetworkSystem.netId;
             playersDatabase.Add(NetworkSystem.netId, PlayerAvater.local);
             if (IsServer)
             {
@@ -46,6 +45,10 @@ namespace GameSystem.Operator
                 // 将自己的玩家信息发送给服务器
                 ClientSendPacket(new CPlayerInfo(PersonalizationSystem.LocalPlayerInfo));
             }
+            _onDestroyEvent += () =>
+            {
+                playersDatabase.Clear();
+            };
         }
 
         private void Update()
@@ -53,27 +56,10 @@ namespace GameSystem.Operator
             timer += Time.deltaTime;
             if (timerTargetOffset - timerOffset > 1) timerOffset = timerTargetOffset;
             else timerOffset = Mathf.Lerp(timerOffset, timerTargetOffset, 0.1f);
-            if (IsServer) ServerUpdate();
         }
-
 
         // 玩家管理 -------------------------------------
-        Dictionary<string, PlayerAvater> playersDatabase = new Dictionary<string, PlayerAvater>();
 
-        [System.Serializable]
-        public struct PlayerRecordUnit
-        {
-            public string id;
-            public PersonalizationSystem.PlayerInfo info;
-            public Vector3 pos;
-
-            public PlayerRecordUnit(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
-            {
-                this.id = id;
-                this.info = info;
-                this.pos = pos;
-            }
-        }
         void AddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
         {
             var g = GameObject.Instantiate(Setting.playerPrefab, pos, Quaternion.identity, playerRoot);
@@ -152,41 +138,21 @@ namespace GameSystem.Operator
             else
             {
                 // 添加数据
-                ServerCallAddPlayer(connection.netId, pkt.info, NewPlayerPos());
+                CallMainThread(() =>
+                {
+                    AddPlayer(connection.netId, pkt.info, NewPlayerPos());
+                    ServerBoardcastPacket(new SPlayerInfo(playersDatabase));
+                });
             }
         }
         [TCPDisconnectionProcess]
         void OnDisconnection(Server.Connection connection)
         {
-            ServerCallDeletePlayer(connection.netId);
-        }
-
-
-        Queue<PlayerRecordUnit> serverCallAddPlayerQueue = new Queue<PlayerRecordUnit>();
-        Queue<string> serverCallDeletePlayerQueue = new Queue<string>();
-        void ServerUpdate()
-        {
-            while (serverCallAddPlayerQueue.Count > 0)
+            CallMainThread(() =>
             {
-                var p = serverCallAddPlayerQueue.Dequeue();
-                AddPlayer(p.id, p.info, p.pos);
-                ServerBoardcastPacket(new SPlayerInfo(playersDatabase));
-            }
-            while (serverCallDeletePlayerQueue.Count > 0)
-            {
-                DeletePlayer(serverCallDeletePlayerQueue.Dequeue());
-            }
+                DeletePlayer(connection.netId);
+            });
         }
-        void ServerCallAddPlayer(string id, PersonalizationSystem.PlayerInfo info, Vector3 pos)
-        {
-            serverCallAddPlayerQueue.Enqueue(new PlayerRecordUnit(id, info, pos));
-        }
-        void ServerCallDeletePlayer(string id)
-        {
-            serverCallDeletePlayerQueue.Enqueue(id);
-        }
-
-
 
 
         // 服务器 UDP -----------------------------------
@@ -205,6 +171,7 @@ namespace GameSystem.Operator
             }
         }
 
+
         private void OnGUI()
         {
             if (GUILayout.Button("Disconnect")) NetworkSystem.client.StopTCPConnecting();
@@ -215,7 +182,7 @@ namespace GameSystem.Operator
             GUILayout.Label("TimerOffset:" + timerOffset);
             GUILayout.Label("TimerTargetOffset:" + timerTargetOffset);
             GUILayout.Label("Latency:" + latency);
-            GUILayout.Label(thisID);
+            GUILayout.Label("Id: " + NetworkSystem.netId);
         }
     }
 }

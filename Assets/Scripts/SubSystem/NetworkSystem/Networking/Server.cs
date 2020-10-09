@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -46,7 +45,11 @@ namespace GameSystem.Networking
         }
         public void CloseConnection(Connection conn)
         {
-            pendingCloseQueue.Enqueue(conn);
+            NetworkSystem.CallMainThread(() =>
+            {
+                conn.Destroy();
+                connections.Remove(conn);
+            });
         }
         public void UDPSend(string message, IPEndPoint remote)
         {
@@ -92,7 +95,6 @@ namespace GameSystem.Networking
 
         public Server()
         {
-            TheMatrix.StartCoroutine(ConnectionThread(), typeof(Server));
             udpClient = new UdpClient(Setting.serverUDPPort);
             udpReceiveThread = new Thread(UDPReceiveThread);
             udpReceiveThread.Start();
@@ -169,8 +171,6 @@ namespace GameSystem.Networking
                 NetworkSystem.ShutdownServer();
             }
         }
-        Queue<TcpClient> pendingConnectionQueue = new Queue<TcpClient>();
-        Queue<Connection> pendingCloseQueue = new Queue<Connection>();
         string NewTcpId(IPEndPoint ip)
         {
             if (ip.Address.Equals(NetworkSystem.LocalIPAddress) && ip.Port.Equals(NetworkSystem.LocalIPPort)) return "0";
@@ -184,26 +184,10 @@ namespace GameSystem.Networking
         }
         void CallConnect(TcpClient client)
         {
-            pendingConnectionQueue.Enqueue(client);
-        }
-        IEnumerator ConnectionThread()
-        {
-            while (true)
+            NetworkSystem.CallMainThread(() =>
             {
-                yield return 0;
-                while (pendingConnectionQueue.Count > 0)
-                {
-                    var cl = pendingConnectionQueue.Dequeue();
-                    var conn = new Connection(cl, this, NewTcpId(cl.Client.RemoteEndPoint as IPEndPoint));
-                    connections.Add(conn);
-                }
-                while (pendingCloseQueue.Count > 0)
-                {
-                    var conn = pendingCloseQueue.Dequeue();
-                    conn.Destroy();
-                    connections.Remove(conn);
-                }
-            }
+                connections.Add(new Connection(client, this, NewTcpId(client.Client.RemoteEndPoint as IPEndPoint)));
+            });
         }
         #endregion
 
