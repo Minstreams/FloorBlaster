@@ -111,26 +111,23 @@ namespace GameSystem.Operator
         {
             if (ipOccupied)
             {
-                GUILayout.Button("相同地址已经存在一个服务器~");
+                GUILayout.Label("相同地址已经存在一个服务器~");
             }
-            else
+            if (GUILayout.Button("创建房间"))
             {
-                if (GUILayout.Button("创建房间"))
-                {
-                    LaunchServer();
+                LaunchServer();
 
-                }
-                localIp = GUILayout.TextField(localIp);
-                serverIp = GUILayout.TextField(serverIp);
-                if (GUILayout.Button("连接"))
-                {
-                    NetworkSystem.LocalIPAddress = IPAddress.Parse(localIp);
-                    NetworkSystem.ConnectTo(IPAddress.Parse(serverIp));
-                }
-                if (GUILayout.Button("刷新"))
-                {
-                    RefreshServerList();
-                }
+            }
+            localIp = GUILayout.TextField(localIp);
+            serverIp = GUILayout.TextField(serverIp);
+            if (GUILayout.Button("连接"))
+            {
+                NetworkSystem.LocalIPAddress = IPAddress.Parse(localIp);
+                NetworkSystem.ConnectTo(IPAddress.Parse(serverIp));
+            }
+            if (GUILayout.Button("刷新"))
+            {
+                RefreshServerList();
             }
             if (LocalIPCheck)
             {
